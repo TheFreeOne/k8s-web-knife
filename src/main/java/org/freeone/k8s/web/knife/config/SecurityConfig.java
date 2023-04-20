@@ -58,7 +58,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
         // 设置路径不需要验证
         http.authorizeRequests()
-                .antMatchers("/pod/newlogs/**","/download/**","/lib/**", "/css/**", "/js/**", "/api/**", "/page/**", "/images/**", "/login", "/favicon.ico", "/login.htm", "/login/**").permitAll()
+                .antMatchers("/wsexec/**","/pod/newlogs/**","/download/**","/lib/**", "/css/**", "/js/**", "/api/**", "/page/**", "/images/**", "/login", "/favicon.ico", "/login.htm", "/login/**").permitAll()
                 // 除此之外都必须验证
                 .anyRequest().authenticated();
     }

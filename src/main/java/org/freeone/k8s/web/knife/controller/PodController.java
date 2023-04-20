@@ -1,11 +1,16 @@
 package org.freeone.k8s.web.knife.controller;
 
+import com.google.common.io.ByteStreams;
+import io.kubernetes.client.Exec;
 import io.kubernetes.client.extended.kubectl.Kubectl;
+import io.kubernetes.client.extended.kubectl.exception.KubectlException;
 import io.kubernetes.client.openapi.ApiClient;
+import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.EventsV1Event;
+import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1Pod;
-import org.freeone.k8s.web.knife.config.websocket.SSEServer;
+import io.kubernetes.client.util.Namespaces;
 import org.freeone.k8s.web.knife.entity.vo.ContainerVo;
 import org.freeone.k8s.web.knife.entity.vo.EventVo;
 import org.freeone.k8s.web.knife.entity.vo.PodVo;
@@ -14,27 +19,20 @@ import org.freeone.k8s.web.knife.utils.PodUtils;
 import org.freeone.k8s.web.knife.utils.ResultKit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Controller
@@ -68,6 +66,55 @@ public class PodController {
         String containerName = pod.getSpec().getContainers().get(0).getName();
         String logs = coreV1Api.readNamespacedPodLog(name, namespace, containerName, false, false, null, null, null, null, 100, null);
         return ResultKit.okWithData(logs);
+    }
+
+
+    @RequestMapping("/exec/{namespace}/{name}")
+//    @ResponseBody
+    public void exec(@PathVariable("namespace") String namespace, @PathVariable("name") String name, @RequestParam Long k8sId
+//        ,@RequestParam String[] command
+            , HttpServletResponse response) throws Exception {
+        ApiClient apiClient1 = K8sUtils.apiClient(k8sId);
+//        String name = "mytomcat-deployment-6695dbdd78-899xj";
+        String container = "mytomcat";
+//        String[] command = new String[]{"ls","-lh"};
+        String[] command = new String[]{"tail", "-200", "/usr/local/tomcat/logs/localhost_access_log.2023-04-20.txt"};
+        boolean stdin = false;
+        boolean tty = false;
+
+        V1Pod pod = new V1Pod().metadata(new V1ObjectMeta().name(name).namespace(Namespaces.NAMESPACE_DEFAULT));
+
+        Exec exec = new Exec(apiClient1);
+        ServletOutputStream outputStream = response.getOutputStream();
+        try {
+            Process proc = exec.exec(pod, command, container, stdin, tty);
+            copyAsync(proc.getInputStream(), outputStream);
+            copyAsync(proc.getErrorStream(), outputStream);
+            if (stdin) {
+                copyAsync(System.in, proc.getOutputStream());
+            }
+            proc.waitFor();
+        } catch (InterruptedException | ApiException | IOException ex) {
+            throw new KubectlException(ex);
+        }
+//        return ResultKit.okWithData("");
+    }
+
+
+    protected static Thread copyAsync(InputStream in, OutputStream out) {
+        Thread t =
+                new Thread(
+                        new Runnable() {
+                            public void run() {
+                                try {
+                                    ByteStreams.copy(in, out);
+                                } catch (IOException ex) {
+                                    ex.printStackTrace();
+                                }
+                            }
+                        });
+        t.start();
+        return t;
     }
 
 

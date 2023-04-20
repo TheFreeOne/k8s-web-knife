@@ -93,10 +93,12 @@ public class K8sWebKnifeApplicationTests {
     @Test
     public void testExec() throws KubectlException {
         ApiClient apiClient1 = K8sUtils.apiClient(2L);
-        String name = "mytomcat-deployment-8df844768-cdgqs";
+        CoreV1Api coreV1Api1 = K8sUtils.coreV1Api(apiClient1);
+        String name = "mytomcat-deployment-6695dbdd78-899xj";
         String container = "mytomcat";
-        String[] command = new String[]{"ls","-lh"};
-        boolean stdin = false;
+//        String[] command = new String[]{"ls","-lh"};
+        String[] command = new String[]{"tail","-200f","/usr/local/tomcat/logs/catalina.2023-04-20.log"};
+        boolean stdin = true;
         boolean tty = false;
 //        KubectlExec
         Integer execute = Kubectl.exec().namespace(Namespaces.NAMESPACE_DEFAULT)

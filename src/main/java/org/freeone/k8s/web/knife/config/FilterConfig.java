@@ -11,13 +11,13 @@ import org.springframework.http.HttpStatus;
 @Configuration
 public class FilterConfig {
 
-    @Bean
-    public FilterRegistrationBean unsafePathFilter() {
-        FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean<>();
-        filterRegistrationBean.setFilter(new UnsafePathFilter());
-        filterRegistrationBean.addUrlPatterns("/*");
-        filterRegistrationBean.setName("unsafePathFilter");
-        filterRegistrationBean.setOrder(1);
-        return filterRegistrationBean;
-    }
+//    @Bean
+//    public FilterRegistrationBean unsafePathFilter() {
+//        FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean<>();
+//        filterRegistrationBean.setFilter(new UnsafePathFilter());
+//        filterRegistrationBean.addUrlPatterns("/*");
+//        filterRegistrationBean.setName("unsafePathFilter");
+//        filterRegistrationBean.setOrder(1);
+//        return filterRegistrationBean;
+//    }
 }

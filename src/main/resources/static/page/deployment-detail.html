@@ -317,6 +317,7 @@
                         title: '操作', width: 170, templet: function (data) {
                             return `<button class="layui-btn layui-btn-xs" onclick="podDetail('${data.namespace}','${data.name}')">详情</button>
                                     <button class="layui-btn layui-btn-xs" onclick="podLogs('${data.namespace}','${data.name}')">logs</button>
+                                    <button class="layui-btn layui-btn-xs" onclick="podExec('${data.namespace}','${data.name}')">exec</button>
 `
                         }
                     }
@@ -615,18 +616,6 @@
 
             var interval1 = null;
 
-            // var source = new EventSource(`/pod/newlogs/${podNamespace}/${podName}?k8sId=` + window.k8sId,{
-            //     headers: {
-            //         'Accept': 'text/event-stream'
-            //     }
-            // });
-            //
-            // source.onmessage = function (event) {
-            //     console.info(event.data);
-            // };
-
-            // return
-
             var index = layer.open({
                 title: 'log详情',
                 type: 1,
@@ -674,6 +663,43 @@
         }
 
         window.podLogs = podLogs
+
+        function podExec(podNamespace, podName) {
+            window.namespace = podNamespace;
+            window.podName = podName
+
+            layer.open({
+                title: 'exec 测试',
+                type: 2,
+                shade: 0.2,
+                maxmin: true,
+                shadeClose: true,
+                area: ['100%', '100%'],
+                content: '../page/pod-exec.html',
+            });
+
+            // $.ajax({
+            //     url: `../pod/exec/${podNamespace}/${podName}?k8sId=` + window.k8sId,
+            //     type: 'GET',
+            //     // data: data.field,
+            //     success: function (result) {
+            //         if (result.code === 10000) {
+            //             const logpre = document.getElementById('log-pre')
+            //             if (logpre) {
+            //                 logpre.innerHTML = result.data;
+            //             } else {
+            //                 clearInterval(interval1)
+            //             }
+            //         } else {
+            //             layer.msg(result.msg)
+            //             clearInterval(interval1)
+            //         }
+            //     }
+            // })
+
+        }
+
+        window.podExec = podExec
 
         function editUpdateStrategy() {
 
