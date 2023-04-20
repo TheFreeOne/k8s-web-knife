@@ -6,6 +6,7 @@ import io.kubernetes.client.extended.kubectl.Kubectl;
 import io.kubernetes.client.extended.kubectl.exception.KubectlException;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
+import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1Pod;
 import org.apache.commons.lang3.StringUtils;
 import org.freeone.k8s.web.knife.utils.K8sUtils;
@@ -30,11 +31,12 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
- * @author zhengkai.blog.csdn.net
+ * https://github.com/kubernetes-client/java/issues/350
  */
 @Component
 @ServerEndpoint("/wsexec/{k8sId}/{namespace}/{name}")
@@ -100,29 +102,36 @@ public class WebSocketServer {
         ApiClient apiClient = K8sUtils.apiClient(Long.parseLong(k8sId));
 //        String name = "mytomcat-deployment-6695dbdd78-899xj";
 
-        String[] command = new String[]{"ls","-lh"};
+
+//        String[] command = new String[]{"/bin/sh","-c","pwd"};
+        String[] command = new String[]{"sh"};
+//        String[] command = new String[]{"ls","-lh"};
 //        String[] command = new String[]{"/bin/bash"};
 //        String[] command = new String[]{"/bin/bash"};
 //        String[] command = new String[]{"tail", "-200f", "/usr/local/tomcat/logs/localhost_access_log.2023-04-20.txt"};
         boolean stdin = true;
         boolean tty = true;
         V1Pod pod = Kubectl.get(V1Pod.class).name(name).namespace(namespace).apiClient(apiClient).execute();
-        String containerName = pod.getSpec().getContainers().get(0).getName();
+        String containerName = Objects.requireNonNull(pod.getSpec()).getContainers().get(0).getName();
 
         Exec exec = new Exec(apiClient);
 
-
         PrintStream out = System.out;
         PrintStream err = System.err;
-        try {
-            this.proc = exec.exec(pod, command, containerName, stdin, tty);
-            // 输出结果 PipedInputStream
-            InputStream inputStream = proc.getInputStream();
-            if (inputStream instanceof PipedInputStream) {
-                PipedInputStream pipedInputStream = (PipedInputStream) inputStream;
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(pipedInputStream, StandardCharsets.UTF_8));
-                this.readThread = new Thread(
-                        () -> {
+        new Thread(()-> {
+            try {
+                CoreV1Api coreV1Api = K8sUtils.coreV1Api(apiClient);
+
+                this.proc = exec.exec(namespace,name,command,containerName,true,true);
+
+
+                // 输出结果 PipedInputStream
+                InputStream inputStream = proc.getInputStream();
+                if (inputStream instanceof PipedInputStream) {
+                    PipedInputStream pipedInputStream = (PipedInputStream) inputStream;
+                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(pipedInputStream, StandardCharsets.UTF_8));
+                    this.readThread = new Thread(
+                            () -> {
 //                            try {
 //                                int data = pipedInputStream.read();
 //                                while (data != -1) {
@@ -133,34 +142,34 @@ public class WebSocketServer {
 //                            } catch (IOException e) {
 //                                e.printStackTrace();
 //                            }
-                            String line = null;
-                            while (true) {
-                                try {
-                                    line = bufferedReader.readLine();
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                                if (line != null) {
-
-                                    if (this.session.isOpen()) {
-                                        // 异步传输数据到客户端
-                                        try {
-                                            this.session.getBasicRemote().sendText(line);
-                                        } catch (IOException e) {
-                                            e.printStackTrace();
-                                        }
+                                String line = null;
+                                while (true) {
+                                    try {
+                                        line = bufferedReader.readLine();
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
                                     }
+                                    if (line != null) {
 
+                                        if (this.session.isOpen()) {
+                                            // 异步传输数据到客户端
+                                            try {
+                                                this.session.getBasicRemote().sendText(line);
+                                            } catch (IOException e) {
+                                                e.printStackTrace();
+                                            }
+                                        }
+
+                                    }
                                 }
-                            }
 
-                        });
-                this.readThread.setDaemon(Boolean.TRUE);
-                this.readThread.setName("socket-log");
-                this.readThread.start();
-            }
+                            });
+                    this.readThread.setDaemon(Boolean.TRUE);
+                    this.readThread.setName("socket-log");
+                    this.readThread.start();
+                }
 
-            {
+                {
 //                // 输入，命令 WebSocketStreamHandler$WebSocketOutputStream
 //                OutputStream outputStream = proc.getOutputStream();
 //                // 报错PipedInputStream
@@ -168,15 +177,18 @@ public class WebSocketServer {
 //                OutputStream sendStream = this.session.getBasicRemote().getSendStream();
 //                copyAsync(proc.getInputStream(), out);
 //                copyAsync(proc.getErrorStream(), err);
+                }
+                if (stdin) {
+                    copyAsync(input, proc.getOutputStream());
+                }
+                System.out.println("1231231");
+                proc.waitFor();
+                this.readThread.join();
+
+            } catch (InterruptedException | ApiException | IOException ex) {
+                ex.printStackTrace();
             }
-            if (stdin) {
-                copyAsync(input, proc.getOutputStream());
-            }
-            System.out.println("1231231");
-            proc.waitFor();
-        } catch (InterruptedException | ApiException | IOException ex) {
-            throw new KubectlException(ex);
-        }
+        }).start();
 
         log.info("用户连接:" + this.userId + ",当前在线人数为:" + getOnlineCount());
 //        try {
@@ -216,6 +228,7 @@ public class WebSocketServer {
         if (StringUtils.isNotBlank(command)) {
             String[] s = command.split(" ");
             log.info("recv command = {}", s);
+            log.info("proc != null is {}", proc != null);
             if (proc != null) {
 
                 output.write(command.getBytes());
@@ -266,6 +279,7 @@ public class WebSocketServer {
                         new Runnable() {
                             public void run() {
                                 try {
+                                    System.out.println("do copyAsync");
                                     ByteStreams.copy(in, out);
                                 } catch (IOException ex) {
                                     ex.printStackTrace();
