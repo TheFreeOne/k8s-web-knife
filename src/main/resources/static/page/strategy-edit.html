@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>layui</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="../lib/layui-v2.6.3/css/layui.css" media="all">
+    <link rel="stylesheet" href="../css/public.css" media="all">
+    <style>
+        body {
+            background-color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+<div class="layui-form layuimini-form" lay-filter="updateStrategyForm">
+    <div class="layui-form-item">
+        <label class="layui-form-label">更新策略</label>
+
+        <div class="layui-input-block">
+            <select name="type" lay-filter="type" id="type" lay-verify="required">
+                <option value="">选择更新策略</option>
+                <option value="RollingUpdate">滚动更新</option>
+                <option value="Recreate">重新创建</option>
+            </select>
+        </div>
+
+    </div>
+
+    <div class="layui-form-item RollingUpdate-About">
+
+        <label class="layui-form-label required">最大不可用</label>
+        <div class="layui-inline" style=" min-width: 466px; ">
+
+            <div class="layui-input-inline">
+                <input type="number" min="0" name="maxUnavailableInt"   oninput="if(value<=0)value=0;if(value>=10)value=10;value=parseInt(value)" lay-reqtext="最大不可用不能为空"
+                       placeholder="0 - 10" value="" class="layui-input">
+            </div>
+            <div class="layui-form-mid layui-word-aux">个</div>
+            <div class="layui-input-inline">
+                <input type="text" name="maxUnavailableString"  lay-reqtext="最大不可用不能为空"
+                       placeholder="请输入" value="" class="layui-input">
+            </div>
+            <div class="layui-form-mid layui-word-aux">%</div>
+            <div class="layui-form-mid layui-word-aux"> 控制发布的稳定性，实例值越小，发布越平滑</div>
+        </div>
+
+
+
+    </div>
+
+    <div class="layui-form-item RollingUpdate-About">
+
+        <label class="layui-form-label required">最大超量</label>
+        <div class="layui-inline" style=" min-width: 466px; ">
+
+            <div class="layui-input-inline">
+                <input type="number" min="1" name="maxSurgeInt"    oninput="if(value<=0)value=1;if(value>=10)value=10;value=parseInt(value)"  lay-reqtext="最大超量不能为空"
+                       placeholder="1 - 10" value="" class="layui-input">
+            </div>
+            <div class="layui-form-mid layui-word-aux">个</div>
+            <div class="layui-input-inline">
+                <input type="text" name="maxSurgeString" lay-reqtext="最大超量不能为空"
+                       placeholder="请输入" value="" class="layui-input">
+            </div>
+            <div class="layui-form-mid layui-word-aux">%</div>
+            <div class="layui-form-mid layui-word-aux">控制发布速度的快慢，实例值越大，发布越快，相当于步长</div>
+        </div>
+
+    </div>
+
+
+    <div class="layui-form-item  ">
+        <div class="layui-input-block">
+            <button class="layui-btn layui-btn-normal" lay-submit lay-filter="saveBtn">确认保存</button>
+        </div>
+    </div>
+</div>
+</div>
+<script src="../lib/layui-v2.6.3/layui.js" charset="utf-8"></script>
+<script>
+    layui.use(['form'], function () {
+        var form = layui.form,
+            layer = layui.layer,
+            $ = layui.$;
+
+        const deploy = JSON.parse(localStorage.getItem("deploy"))
+        const updateStrategyObj = JSON.parse(localStorage.getItem("updateStrategy"))
+        form.val('updateStrategyForm', updateStrategyObj)
+
+        if (updateStrategyObj.type  && updateStrategyObj.type ==='RollingUpdate') {
+
+            $(".RollingUpdate-About").show()
+            if (updateStrategyObj.maxUnavailableString) {
+                $("input[name=maxUnavailableString]").value = (updateStrategyObj.maxUnavailableString.replace('%',''))
+            }
+
+            document.querySelectorAll('.RollingUpdate-About').forEach(item => {
+                item.style.display='block'
+            })
+        } else {
+            document.querySelectorAll('.RollingUpdate-About').forEach(item => {
+                item.style.display='none'
+            })
+        }
+
+        form.on('select(type)', function(data){
+            if (data.value ==='RollingUpdate') {
+
+                $(".RollingUpdate-About").show()
+                if (updateStrategyObj.maxUnavailableString) {
+                    $("input[name=maxUnavailableString]").value = (updateStrategyObj.maxUnavailableString.replace('%',''))
+                }
+
+                document.querySelectorAll('.RollingUpdate-About').forEach(item => {
+                    item.style.display='block'
+                })
+            } else {
+                document.querySelectorAll('.RollingUpdate-About').forEach(item => {
+                    item.style.display='none'
+                })
+            }
+        })
+
+        //监听提交
+        form.on('submit(saveBtn)', function (data) {
+            const namespace = localStorage.getItem("currentNamespace")
+            const name = localStorage.getItem("currentName")
+
+            if (data.field.type ==='RollingUpdate') {
+                if (data.field.maxUnavailableInt=='') {
+                    layer.msg('maxUnavailableInt can not be null')
+                    return false
+                }
+                if (data.field.maxSurgeInt=='') {
+                    layer.msg('maxSurgeInt can not be null')
+                    return false
+                }
+            }
+
+            console.log('data', data)
+            console.log('data.field', data.field)
+            $.ajax({
+                url: `../deploy/updateStrategy/${namespace}/${name}`+'?k8sId='+parent.k8sId,
+                type: 'POST',
+                data: data.field || {},
+                success: function (result){
+                    if (result.code ===10000) {
+                        parent.layer.msg('修改成功');
+                        var iframeIndex = parent.layer.getFrameIndex(window.name);
+                        parent.layer.close(iframeIndex);
+                        parent.location.reload()
+                    } else {
+                        parent.layer.msg(result.msg);
+                    }
+                }
+            })
+
+
+
+            return false;
+        });
+
+    });
+</script>
+</body>
+</html>

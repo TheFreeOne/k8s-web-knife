@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>layui</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="../lib/layui-v2.6.3/css/layui.css" media="all">
+    <link rel="stylesheet" href="../css/public.css" media="all">
+</head>
+<body>
+<div class="layuimini-container">
+    <div class="layuimini-main">
+
+        <fieldset class="table-search-fieldset">
+            <legend>搜索k8s信息</legend>
+            <div style="margin: 10px 10px 10px 10px">
+                <form class="layui-form layui-form-pane" action="">
+                    <div class="layui-form-item">
+                        <div class="layui-inline">
+                            <button type="submit" class="layui-btn layui-btn-primary" lay-submit
+                                    lay-filter="data-search-k8s-btn"><i class="layui-icon"></i> 搜 索
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </fieldset>
+
+        <script type="text/html" id="toolbarDemo">
+            <div class="layui-btn-container">
+                <button class="layui-btn layui-btn-normal layui-btn-sm data-add-btn" lay-event="add"> 添加k8s Api
+                    Server
+                </button>
+            </div>
+        </script>
+
+        <script type="text/html" id="dockerToolbarDemo">
+            <div class="layui-btn-container">
+                <button class="layui-btn layui-btn-normal layui-btn-sm data-add-btn" lay-event="add"> 添加Docker Api
+                </button>
+            </div>
+        </script>
+
+        <table class="layui-hide" id="currentTableId" lay-filter="currentTableFilter"></table>
+
+        <script type="text/html" id="currentTableBar">
+            <a class="layui-btn layui-btn-normal layui-btn-xs data-count-edit" lay-event="edit">编辑</a>
+            <a class="layui-btn layui-btn-danger layui-btn-xs data-count-edit" lay-event="delete">删除</a>
+        </script>
+
+        <fieldset class="table-search-fieldset">
+            <legend>搜索docker api信息</legend>
+            <div style="margin: 10px 10px 10px 10px">
+                <form class="layui-form layui-form-pane" action="">
+                    <div class="layui-form-item">
+                        <div class="layui-inline">
+                            <button type="submit" class="layui-btn layui-btn-primary" lay-submit
+                                    lay-filter="data-search-docker-btn"><i class="layui-icon"></i> 搜 索
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </fieldset>
+
+        <table class="layui-hide" id="currentDockerTableId" lay-filter="currentDockerTableFilter"></table>
+
+        <script type="text/html" id="currentDockerTableBar">
+            <a class="layui-btn layui-btn-normal layui-btn-xs data-count-edit" lay-event="edit">编辑</a>
+            <a class="layui-btn layui-btn-primary layui-btn-xs layui-border-blue  "
+               lay-event="manger-template">管理模板</a>
+            <a class="layui-btn layui-btn-xs data-count-edit layui-btn-danger" lay-event="delete">删除</a>
+        </script>
+
+    </div>
+</div>
+<script src="../lib/layui-v2.6.3/layui.js" charset="utf-8"></script>
+<script>
+    layui.use(['form', 'table'], function () {
+        var $ = layui.jquery,
+            form = layui.form,
+            table = layui.table;
+
+        function tableReload() {
+            table.render({
+                elem: '#currentTableId',
+                url: '../k8s/record/list',
+                toolbar: '#toolbarDemo',
+                defaultToolbar: ['filter', 'exports', 'print', {
+                    title: '提示',
+                    layEvent: 'LAYTABLE_TIPS',
+                    icon: 'layui-icon-tips'
+                }],
+                cols: [[
+                    // {type: "checkbox", width: 50},
+                    // {field: 'uid', width: 80, title: 'ID', sort: false},
+                    {
+                        field: 'clusterName', width: 200, title: 'name', templet: (row) => {
+                            let html = row.clusterName
+                            return html
+                        }
+                    },
+                    {field: 'apiServerUrl', minWidth: 200, title: 'api server url'},
+
+                    {title: '操作', width: 230, toolbar: '#currentTableBar', align: "center"}
+                ]],
+                // limits: [10, 15, 20, 25, 50, 100],
+                // limit: 15,
+                page: false,
+                limit: Number.MAX_VALUE,
+                skin: 'row',
+                parseData: function (res) { //res 即为原始返回的数据
+
+                    return {
+                        "code": res.code === 10000 ? 0 : 500, //解析接口状态
+                        "msg": res.code === 10000 ? '查询成功' : '查询失败', //解析提示文本
+                        "count": res.data?.length || 0, //解析数据长度
+                        "data": res.data //解析数据列表
+                    };
+                }
+            });
+        }
+
+        function dockerTableReload() {
+            table.render({
+                elem: '#currentDockerTableId',
+                url: '../docker/image/listDockerApiRecord',
+                toolbar: '#dockerToolbarDemo',
+                defaultToolbar: ['filter', 'exports', 'print', {
+                    title: '提示',
+                    layEvent: 'LAYTABLE_TIPS',
+                    icon: 'layui-icon-tips'
+                }],
+                cols: [[
+                    // {type: "checkbox", width: 50},
+                    // {field: 'uid', width: 80, title: 'ID', sort: false},
+                    {field: 'dockerName', width: 200, title: 'name'},
+                    {field: 'hostPath', minWidth: 200, title: 'api server url'},
+                    {field: 'apiVersion', width: 130, title: 'api version', align: 'center'},
+
+                    {title: '操作', width: 370, toolbar: '#currentDockerTableBar', align: "center"}
+                ]],
+                // limits: [10, 15, 20, 25, 50, 100],
+                // limit: 15,
+                page: false,
+                limit: Number.MAX_VALUE,
+                skin: 'row',
+                parseData: function (res) { //res 即为原始返回的数据
+
+                    return {
+                        "code": res.code === 10000 ? 0 : 500, //解析接口状态
+                        "msg": res.code === 10000 ? '查询成功' : '查询失败', //解析提示文本
+                        "count": res.data?.length || 0, //解析数据长度
+                        "data": res.data //解析数据列表
+                    };
+                }
+            });
+        }
+
+        dockerTableReload()
+
+        window.dockerTableReload = dockerTableReload
+
+        tableReload()
+
+        window.tableReload = tableReload
+
+        // 监听搜索操作
+        form.on('submit(data-search-k8s-btn)', function (data) {
+            var result = JSON.stringify(data.field);
+            // layer.alert(result, {
+            //     title: '最终的搜索信息'
+            // });
+
+            //执行搜索重载
+            table.reload('currentTableId',{});
+
+            return false;
+        });
+        // 监听搜索操作
+        form.on('submit(data-search-docker-btn)', function (data) {
+
+
+            //执行搜索重载
+            table.reload('currentDockerTableId',{});
+
+            return false;
+        });
+
+        /**
+         * toolbar监听事件
+         */
+        table.on('toolbar(currentTableFilter)', function (obj) {
+            if (obj.event === 'add') {  // 监听添加操作
+                var index = layer.open({
+                    title: '添加k8s Api Server',
+                    type: 2,
+                    shade: 0.2,
+                    maxmin: true,
+                    shadeClose: true,
+                    area: ['80%', '80%'],
+                    content: '../page/k8s-add.html',
+                });
+                $(window).on("resize", function () {
+                    layer.full(index);
+                });
+            } else if (obj.event === 'delete') {  // 监听删除操作
+                var checkStatus = table.checkStatus('currentTableId')
+                    , data = checkStatus.data;
+                layer.alert(JSON.stringify(data));
+            }
+        });
+        /**
+         * toolbar监听事件
+         */
+        table.on('toolbar(currentDockerTableFilter)', function (obj) {
+            if (obj.event === 'add') {  // 监听添加操作
+                var index = layer.open({
+                    title: '添加Docker Api',
+                    type: 2,
+                    shade: 0.2,
+                    maxmin: true,
+                    shadeClose: true,
+                    area: ['80%', '80%'],
+                    content: '../page/docker-api-add.html',
+                });
+                $(window).on("resize", function () {
+                    layer.full(index);
+                });
+            } else if (obj.event === 'delete') {  // 监听删除操作
+                var checkStatus = table.checkStatus('currentTableId')
+                    , data = checkStatus.data;
+                layer.alert(JSON.stringify(data));
+            }
+        });
+
+        //监听表格复选框选择
+        table.on('checkbox(currentTableFilter)', function (obj) {
+            console.log(obj)
+        });
+
+        table.on('tool(currentTableFilter)', function (obj) {
+            var data = obj.data;
+            if (obj.event === 'delete') {
+                layer.confirm('确定删除么', function (index) {
+                    $.ajax({
+                        url: '../k8s/record/delete',
+                        type: 'POST',
+                        data: {
+                            id: obj.data.id
+                        },
+                        success: function (result) {
+                            if (result.code === 10000) {
+                                form.val('k8sForm', result.data)
+                                tableReload()
+                            } else {
+                                layer.msg(result.msg)
+                            }
+                        }
+                    })
+                    layer.close(index);
+                });
+
+
+            } else if (obj.event === 'edit') {
+                // 查看
+                window.k8sId = obj.data.id
+                layer.open({
+                    title: 'edit k8s api server info ',
+                    type: 2,
+                    shade: 0.2,
+                    maxmin: true,
+                    shadeClose: true,
+                    area: ['80%', '80%'],
+                    content: '../page/k8s-edit.html',
+                });
+
+            }
+        });
+
+        table.on('tool(currentDockerTableFilter)', function (obj) {
+            var data = obj.data;
+           if (obj.event === 'manger-template') {
+               localStorage.setItem("templateDockerId" , data.id)
+                layer.open({
+                    title: 'dockerfile 管理',
+                    type: 2,
+                    shade: 0.2,
+                    maxmin: true,
+                    shadeClose: true,
+                    area: ['80%', '80%'],
+                    content: '../page/dockerfile-template-table.html',
+                });
+
+            } else if (obj.event === 'edit') {
+                localStorage.setItem("editDockerId" , data.id)
+                var index = layer.open({
+                    title: '编辑Docker Api',
+                    type: 2,
+                    shade: 0.2,
+                    maxmin: true,
+                    shadeClose: true,
+                    area: ['80%', '80%'],
+                    content: '../page/docker-api-edit.html',
+                });
+
+            }else if (obj.event === 'delete') {
+                localStorage.setItem("editDockerId" , data.id)
+                layer.confirm('确定删除?', {icon: 3, title:'提示'}, function(index){
+
+                    $.ajax({
+                        url: '../docker/image/deleteDockerApiRecord',
+                        type: 'POST',
+                        data: {
+                            dockerId: data.id
+                        },
+                        success: function (result) {
+                            if (result.code === 10000) {
+                                dockerTableReload()
+                                layer.msg('删除成功')
+                            } else {
+                                layer.msg(result.msg)
+                            }
+                        }
+                    })
+
+
+
+                    layer.close(index);
+                });
+
+
+            }
+        });
+
+    });
+</script>
+
+</body>
+</html>

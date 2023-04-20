@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>layui</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="../lib/layui-v2.6.3/css/layui.css" media="all">
+    <link rel="stylesheet" href="../lib/highlight-11.7.0/styles/default.min.css" media="all">
+    <link rel="stylesheet" href="../css/public.css" media="all">
+    <style>
+
+        pre {
+            overflow: auto
+        }
+
+        .editarea {
+            width: 1px;
+            height: 90vh;
+            flex-grow: 1
+        }
+
+    </style>
+</head>
+<body>
+<div class="layuimini-container">
+    <div class="layuimini-main">
+
+        <form class="layui-form" action="" lay-filter="podForm">
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">基本信息</label>
+                <div class="layui-form-item">
+                    <div class="layui-inline" style=" min-width: 466px; ">
+                        <label class="layui-form-label">名称</label>
+                        <div class="layui-input-inline"  >
+                            <input class="layui-input" style="width: 360px" name="name"    readonly>
+                        </div>
+                    </div>
+
+                    <div class="layui-inline"  style=" min-width: 466px; ">
+                        <label class="layui-form-label">命名空间</label>
+                        <div class="layui-input-inline"  >
+                            <input class="layui-input" style="width: 360px" name="namespace"     readonly>
+                        </div>
+                    </div>
+                    <div class="layui-inline"  style=" min-width: 466px; ">
+                        <label class="layui-form-label">Resource Version</label>
+                        <div class="layui-input-inline"  >
+                            <input class="layui-input" style="width: 360px" name="resourceVersion"     readonly>
+                        </div>
+                    </div>
+
+                    <div class="layui-inline"  style=" min-width: 466px; ">
+                        <label class="layui-form-label">创建时间</label>
+                        <div class="layui-input-inline"  >
+                            <input class="layui-input" style="width: 360px" name="createAt"     readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">标签</label>
+                <div class="layui-input-block" id="pod-labels">
+
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">Conditions</label>
+                <div class="layui-input-block" id="pod-conditions">
+                    <div class="layui-table">
+                        <table id="conditionsTable" lay-filter="conditionsTable"></table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">events</label>
+                <div class="layui-input-block" id="pod-events">
+                    <div class="layui-table">
+                        <table id="eventsTable" lay-filter="eventsTable"></table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">containers</label>
+                <div class="layui-form" action="" lay-filter="container-form">
+                    <div class="layui-form-item">
+                        <div class="layui-inline" style=" min-width: 466px; ">
+                            <label class="layui-form-label">image</label>
+                            <div class="layui-input-inline"  >
+                                <input class="layui-input" style="width: 360px" name="image"    readonly>
+                            </div>
+                        </div>
+
+                        <div class="layui-inline"  style=" min-width: 466px; ">
+                            <label class="layui-form-label">ready</label>
+                            <div class="layui-input-inline"  >
+                                <input class="layui-input" style="width: 360px" name="ready"     readonly>
+                            </div>
+                        </div>
+                        <div class="layui-inline"  style=" min-width: 466px; ">
+                            <label class="layui-form-label">started</label>
+                            <div class="layui-input-inline"  >
+                                <input class="layui-input" style="width: 360px" name="started"     readonly>
+                            </div>
+                        </div>
+
+                        <div class="layui-inline"  style=" min-width: 466px; ">
+                            <label class="layui-form-label">restartCount</label>
+                            <div class="layui-input-inline"  >
+                                <input class="layui-input" style="width: 360px" name="restartCount"     readonly>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <div class="layui-inline" style=" min-width: 466px; ">
+                            <label class="layui-form-label">就绪检测</label>
+                            <div class="layui-input-block"  >
+
+                                <div class="layui-form" action="" lay-filter="readinessProbe-form">
+                                    <div class="layui-form-item">
+                                        <div class="layui-inline" style=" min-width: 466px; ">
+                                            <label class="layui-form-label">检查方式</label>
+                                            <div class="layui-input-block"  >
+                                                <textarea class="layui-textarea" style="width: 360px" name="checkMethod"    readonly></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="layui-form-item">
+
+
+
+
+                                        <div class="layui-inline" style=" min-width: 466px; ">
+                                            <label class="layui-form-label">初始等待(秒)</label>
+                                            <div class="layui-input-inline"  >
+                                                <input class="layui-input" style="width: 360px" name="initialDelaySeconds"    readonly>
+                                            </div>
+                                        </div>
+
+                                        <div class="layui-inline"  style=" min-width: 466px; ">
+                                            <label class="layui-form-label">检测次数</label>
+                                            <div class="layui-input-inline"  >
+                                                <input class="layui-input" style="width: 360px" name="periodSeconds"     readonly>
+                                            </div>
+                                        </div>
+                                        <div class="layui-inline"  style=" min-width: 466px; ">
+                                            <label class="layui-form-label">成功次数</label>
+                                            <div class="layui-input-inline"  >
+                                                <input class="layui-input" style="width: 360px" name="successThreshold"     readonly>
+                                            </div>
+                                        </div>
+
+                                        <div class="layui-inline"  style=" min-width: 466px; ">
+                                            <label class="layui-form-label">失败次数</label>
+                                            <div class="layui-input-inline"  >
+                                                <input class="layui-input" style="width: 360px" name="failureThreshold"     readonly>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+
+
+                    <div class="layui-form-item">
+                        <div class="layui-inline" style=" min-width: 466px; ">
+                            <label class="layui-form-label">运行检测</label>
+                            <div class="layui-input-block"  >
+
+                                <div class="layui-form" action="" lay-filter="livenessProbe-form">
+                                    <div class="layui-form-item">
+                                        <div class="layui-inline" style=" min-width: 466px; ">
+                                            <label class="layui-form-label">检查方式</label>
+                                            <div class="layui-input-block"  >
+                                                <textarea class="layui-textarea" style="width: 360px" name="checkMethod"    readonly></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="layui-form-item">
+                                        <div class="layui-inline" style=" min-width: 466px; ">
+                                            <label class="layui-form-label">初始等待(秒)</label>
+                                            <div class="layui-input-inline"  >
+                                                <input class="layui-input" style="width: 360px" name="initialDelaySeconds"    readonly>
+                                            </div>
+                                        </div>
+
+                                        <div class="layui-inline"  style=" min-width: 466px; ">
+                                            <label class="layui-form-label">检测次数</label>
+                                            <div class="layui-input-inline"  >
+                                                <input class="layui-input" style="width: 360px" name="periodSeconds"     readonly>
+                                            </div>
+                                        </div>
+                                        <div class="layui-inline"  style=" min-width: 466px; ">
+                                            <label class="layui-form-label">成功次数</label>
+                                            <div class="layui-input-inline"  >
+                                                <input class="layui-input" style="width: 360px" name="successThreshold"     readonly>
+                                            </div>
+                                        </div>
+
+                                        <div class="layui-inline"  style=" min-width: 466px; ">
+                                            <label class="layui-form-label">失败次数</label>
+                                            <div class="layui-input-inline"  >
+                                                <input class="layui-input" style="width: 360px" name="failureThreshold"     readonly>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </form>
+
+    </div>
+</div>
+<script src="../lib/layui-v2.6.3/layui.js" charset="utf-8"></script>
+<script src="../lib/js-yaml-4.1.0/js-yaml.js" charset="utf-8"></script>
+<script src="../lib/highlight-11.7.0/highlight.js" charset="utf-8"></script>
+<script src="../lib/highlight-11.7.0/languages/yaml.min.js" charset="utf-8"></script>
+<script src="../lib/highlight-11.7.0/languages/json.min.js" charset="utf-8"></script>
+<script>
+
+    console.log(window.yaml)
+    const podNamespace = localStorage.getItem('podNamespace')
+    const podName = localStorage.getItem('podName')
+    window.k8sId = parent.k8sId
+
+    layui.use(['form', 'table','element'], function () {
+
+        var $ = layui.jquery,
+            form = layui.form,
+            element = layui.element,
+            table = layui.table;
+
+        $.get(`../pod/get/${podNamespace}/${podName}`+'?k8sId='+window.k8sId, {},(res) => {
+            renderPodInformation(res.data)
+        })
+
+        function renderPodInformation(podInfo) {
+            console.debug(podInfo)
+
+            form.val('podForm', podInfo)
+
+            $('#pod-labels').empty()
+            const labels = podInfo.labels || []
+            const labelsKeys = Object.keys(labels)
+            labelsKeys.forEach((item) => {
+                $('#pod-labels').append(`<button type="button"class="layui-btn layui-btn-primary layui-border-blue">${item}:${labels[item]}</button>`)
+            })
+
+
+            const conditions = podInfo.conditions
+            if (conditions) {
+                //展示已知数据
+                table.render({
+                    elem: '#conditionsTable'
+                    ,cols: [[ //标题栏
+                         {field: 'type', title: '类别', width: 105}
+                        ,{field: 'status', title: '状态', width: 80}
+                        ,{field: 'lastUpdateTime', title: '最后检测时间', width: 220}
+                        ,{field: 'lastTransitionTime', title: '最后迁移时间', width: 220}
+                        ,{field: 'reason', title: '原因' }
+                        ,{field: 'message', title: '信息' }
+                    ]]
+                    ,data:conditions
+                    //,skin: 'line' //表格风格
+                    ,even: true
+                    //,page: true //是否显示分页
+                    //,limits: [5, 7, 10]
+                    //,limit: 5 //每页默认显示的数量
+                })
+            }
+
+
+            const events = podInfo.events
+            if (events) {
+                //展示已知数据
+                table.render({
+                    elem: '#eventsTable'
+                    ,cols: [[ //标题栏
+                        {field: 'name', title: '名称', width: 105}
+                        ,{field: 'type', title: '类型', width: 105}
+                        ,{field: 'reason', title: '原因', width: 80}
+                        ,{field: 'message', title: '信息' }
+                        ,{field: 'createAt', title: '时间', width: 220}
+                    ]]
+                    ,data:events
+                    //,skin: 'line' //表格风格
+                    ,even: true
+                    //,page: true //是否显示分页
+                    //,limits: [5, 7, 10]
+                    //,limit: 5 //每页默认显示的数量
+                })
+            }
+
+            const containers = podInfo.containers
+            if (containers && containers.length !== 0) {
+                const container =containers[0]
+                console.log('container', container)
+                form.val('container-form', container)
+
+                const readinessProbe= container.readinessProbe
+                if (readinessProbe) {
+                    if (readinessProbe.httpGet) {
+                        readinessProbe.checkMethod = `${readinessProbe.httpGet.scheme}://[]:${readinessProbe.httpGet.portInt || readinessProbe.httpGet.portString}${readinessProbe.httpGet.path}\r\n`
+                    }
+                    form.val('readinessProbe-form', readinessProbe)
+                }
+                const livenessProbe= container.livenessProbe
+                if (livenessProbe) {
+                    if (livenessProbe.httpGet) {
+                        livenessProbe.checkMethod = `${livenessProbe.httpGet.scheme}://[]:${livenessProbe.httpGet.portInt || livenessProbe.httpGet.portString}${livenessProbe.httpGet.path}\r\n`
+                    }
+                    form.val('livenessProbe-form', livenessProbe)
+                }
+            }
+
+        }
+
+
+
+
+
+    });
+</script>
+
+</body>
+</html>

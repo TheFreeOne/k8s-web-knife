@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>layui</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="../lib/layui-v2.6.3/css/layui.css" media="all">
+    <link rel="stylesheet" href="../css/public.css" media="all">
+</head>
+<body>
+<div class="layuimini-container">
+    <div class="layuimini-main">
+
+        <fieldset class="table-search-fieldset">
+            <legend>dockerfile 管理</legend>
+            <div style="margin: 10px 10px 10px 10px">
+                <form class="layui-form layui-form-pane" action="">
+                    <div class="layui-form-item">
+
+                        <div class="layui-inline">
+                            <button type="submit" class="layui-btn layui-btn-primary" lay-submit
+                                    lay-filter="data-search-btn"><i class="layui-icon"></i> 搜 索
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </fieldset>
+
+        <script type="text/html" id="toolbarDemo">
+            <div class="layui-btn-container">
+                <button class="layui-btn layui-btn-normal layui-btn-sm data-add-btn" lay-event="add"> 添加</button>
+                <!--                <button class="layui-btn layui-btn-sm layui-btn-danger data-delete-btn" lay-event="delete"> 删除 </button>-->
+            </div>
+        </script>
+
+        <table class="layui-hide" id="currentTableId" lay-filter="currentTableFilter"></table>
+
+
+    </div>
+</div>
+<script src="https://cdn.bootcdn.net/ajax/libs/dayjs/1.11.6/dayjs.min.js"></script>
+<script src="../lib/layui-v2.6.3/layui.js" charset="utf-8"></script>
+<script>
+    layui.use(['form', 'table'], function () {
+        var $ = layui.jquery,
+            form = layui.form,
+            table = layui.table;
+        var templateDockerId = localStorage.templateDockerId
+        var list = []
+         var tableResult = table.render({
+            elem: '#currentTableId',
+            url: '../dockerfile/list?dockerId=' + templateDockerId,
+            toolbar: '#toolbarDemo',
+            defaultToolbar: ['filter', 'exports', 'print', {
+                title: '提示',
+                layEvent: 'LAYTABLE_TIPS',
+                icon: 'layui-icon-tips'
+            }],
+            cols: [[
+
+                {field: 'id', width: 80, title: 'ID', sort: true},
+                {field: 'templateName', minWidth: 200, title: '模板名称'},
+                {
+                    field: 'isReadonly', width: 100, title: '是否只读', templet: function (row) {
+
+                        return row.isReadonly === true ? '是' : '否'
+                    }
+                },
+
+                {
+                    title: '操作', width: 150, align: "center", templet: function (row) {
+                        let html = `
+
+                     <a class="layui-btn layui-btn-normal layui-btn-xs data-count-edit" lay-event="edit">编辑</a>
+                    <a class="layui-btn layui-btn-xs layui-btn-danger data-count-delete" lay-event="delete">删除</a>
+                    `
+                        return row.isReadonly === true ? '<a class="layui-btn layui-btn-normal layui-btn-xs data-count-edit" lay-event="view">查看</a>' : html
+
+                    }
+                }
+            ]],
+            // limits: [10, 15, 20, 25, 50, 100],
+            // limit: 15,
+            page: false,
+             limit: Number.MAX_VALUE,
+            skin: 'row',
+            parseData: function (res) { //res 即为原始返回的数据
+                const arr = res.data || []
+                if (arr.length === 0) {
+                    localStorage.removeItem('dockerId')
+                } else if (arr.length === 1) {
+                    localStorage.setItem('dockerId', arr[0].id)
+                } else {
+                    // do nothing
+                }
+                return {
+                    "code": res.code === 10000 ? 0 : 500, //解析接口状态
+                    "msg": res.code === 10000 ? '查询成功' : '查询失败', //解析提示文本
+                    "count": res.data?.length || 0, //解析数据长度
+                    "data": res.data //解析数据列表
+                };
+            }
+        });
+
+        // 监听搜索操作
+        form.on('submit(data-search-btn)', function (data) {
+            var result = JSON.stringify(data.field);
+
+
+            //执行搜索重载
+            table.reload('currentTableId', {
+                page: {
+                    curr: 1
+                }
+                , where: {
+                    searchParams: result
+                }
+            }, 'data');
+
+            return false;
+        });
+
+        /**
+         * toolbar监听事件
+         */
+        table.on('toolbar(currentTableFilter)', function (obj) {
+            if (obj.event === 'add') {  // 监听添加操作
+                {
+
+                 var addIndex =   layer.open({
+                        title: '编辑配置',
+                        type: 1,
+                        shade: 0.2,
+                        maxmin: true,
+                        shadeClose: true,
+                        area: ['90%', '90%'],
+                        btn: ['确定','取消'],
+                        content: `
+            <div class="layui-form-item">
+                <label class="layui-form-label">模板名称</label>
+                <div class="layui-input-block">
+                    <input type="text" id="templateName" required name="templateName" autocomplete="off" placeholder="模板名称" class="layui-input">
+                </div>
+            </div>
+            <pre  id="dockerfile-add" contenteditable="true" style="border: 1px solid gray;"   ></pre>
+             `,
+                        success: function (layero, index) {
+                            document.getElementById('templateName').value = '新模板'+dayjs().format('YYYY-MM-DD HH:mm:ss')
+                            try {
+
+                                document.getElementById('dockerfile-add').innerHTML
+                                    =
+`# 设置基础镜像
+FROM tomcat:9.0.70-jdk8
+
+MAINTAINER fileonwer
+
+CMD ["bash"]
+
+#使用add 下载，                              放到该目录下并设置文件名，避免下载接口千奇百怪
+ADD http://192.168.0.142:8080/getWarOrJar  /usr/local/tomcat/webapps/ROOT.war
+
+# 工作目录
+WORKDIR /usr/local/tomcat
+
+#RUN APT-get -y install vim
+
+#设置环境变量 时区
+ENV TZ Asia/Shanghai
+
+# 声明端口
+EXPOSE 8080
+
+# 镜像的标签
+LABEL org.opencontainers.image.authors="runoob"
+
+
+# 执行tomcat的启动命令
+CMD ["/usr/local/tomcat/bin/catalina.sh","run"]`
+                            } catch (e) {
+                                //
+                            }
+                        },btn1: function(index, layero){
+                            //按钮【按钮二】的回调
+                            console.log(document.getElementById('dockerfile-add').innerHTML)
+                            console.log(document.getElementById('templateName').value)
+                            // dayjs().format('YYYYMMDDHHmmss')
+                            let templateName = document.getElementById('templateName').value
+                            if (templateName === '') {
+                                templateName = '新模板'+dayjs().format('YYYYMMDDHHmmss')
+                            }
+                            $.ajax({
+                                url: '../dockerfile/add',
+                                type: 'POST',
+                                data: {
+                                    dockerId: templateDockerId,
+                                    content: document.getElementById('dockerfile-add').innerText,
+                                    templateName: templateName
+                                },
+                                async: false,
+                                success: function (result) {
+                                    tableResult.reload()
+                                    layer.close(addIndex)
+                                }
+                            })
+
+
+                            return false // 开启该代码可禁止点击该按钮关闭
+                        }
+                        ,btn2: function(index, layero){
+                            //按钮【按钮三】的回调
+                            console.log('btn2')
+                            //return false 开启该代码可禁止点击该按钮关闭
+                        }
+                    });
+                }
+            }
+        });
+
+        //监听表格复选框选择
+        table.on('checkbox(currentTableFilter)', function (obj) {
+            console.log(obj)
+        });
+
+        table.on('tool(currentTableFilter)', function (obj) {
+            var data = obj.data;
+            if (obj.event === 'view') {
+
+                layer.open({
+                    title: '配置详情',
+                    type: 1,
+                    shade: 0.2,
+                    maxmin: true,
+                    shadeClose: true,
+                    area: ['90%', '90%'],
+                    content: `
+            <pre  id="dockerfile-view" contenteditable="false"   ></pre>
+             `,
+                    success: function (layero, index) {
+
+                        try {
+                            document.getElementById('dockerfile-view').innerHTML = data.content
+                        } catch (e) {
+                            //
+                        }
+                    }
+                });
+            } else if (obj.event === 'edit') {
+
+               var indexEdit =  layer.open({
+                    title: '编辑配置',
+                    type: 1,
+                    shade: 0.2,
+                    maxmin: true,
+                    shadeClose: true,
+                    area: ['90%', '90%'],
+                    btn: ['确定','取消'],
+                    content: `
+           <div class="layui-form-item">
+                <label class="layui-form-label">模板名称</label>
+                <div class="layui-input-block">
+                    <input type="text" id="templateName" required name="templateName" autocomplete="off" placeholder="模板名称" class="layui-input">
+                    <input  hidden="hidden" id="dockerfileId" required name="dockerfileId" autocomplete="off" placeholder="dockerfileId"  >
+                </div>
+            </div>
+            <pre  id="dockerfile-edit" contenteditable="true"   ></pre>
+             `,
+                    success: function (layero, index) {
+
+                        try {
+                            document.getElementById('dockerfile-edit').innerHTML = data.content
+                            document.getElementById('templateName').value = data.templateName
+                            document.getElementById('dockerfileId').value = data.id
+                        } catch (e) {
+                            //
+                        }
+                    }, btn1: function () {
+
+                        let templateName = document.getElementById('templateName').value
+                        if (templateName === '') {
+                            templateName = '新模板'+dayjs().format('YYYYMMDDHHmmss')
+                        }
+                        $.ajax({
+                            url: '../dockerfile/edit',
+                            type: 'POST',
+                            data: {
+                                id: document.getElementById('dockerfileId').value,
+                                content: document.getElementById('dockerfile-edit').innerText,
+                                templateName: templateName
+                            },
+                            async: false,
+                            success: function (result) {
+                                tableResult.reload()
+                                layer.close(indexEdit)
+                            }
+                        })
+
+                    }
+                });
+            } else if (obj.event === 'delete') {
+                layer.confirm('真的删除么', function (index) {
+                    $.ajax({
+                        url: '../dockerfile/delete',
+                        type: 'POST',
+                        data: {
+                            id: data.id,
+                        },
+                        async: false,
+                        success: function (result) {
+                            tableResult.reload()
+                            layer.close(index)
+                        }
+                    })
+                    layer.close(index);
+                });
+            }
+        });
+
+    });
+</script>
+
+</body>
+</html>

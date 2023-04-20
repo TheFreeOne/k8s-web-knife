@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>layui</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="../lib/layui-v2.6.3/css/layui.css" media="all">
+    <link rel="stylesheet" href="../css/public.css" media="all">
+</head>
+<body>
+<div class="layuimini-container">
+    <div class="layuimini-main">
+
+
+        <fieldset class="layui-elem-field layui-field-title" style="margin-top: 20px;">
+            <legend>build docker image</legend>
+        </fieldset>
+        <fieldset class="layui-elem-field layui-field-title" style="margin-top: 50px;">
+            <legend>k8s 和 docker 应该在一台机器上</legend>
+        </fieldset>
+        <form class="layui-form" action="" lay-filter="build-form">
+
+            <div class="layui-form-item required">
+                <div class="layui-inline">
+                    <label class="layui-form-label">k8s</label>
+                    <div class="layui-input-inline" style="width: 360px">
+                        <select name="k8sId" id="k8sId" lay-filter="k8sId">
+                        </select>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="layui-form-item required">
+                <label class="layui-form-label">deploy</label>
+
+                <div class="layui-input-block">
+                    <select name="targetDeployment" lay-filter="targetDeployment" id="targetDeployment"
+                            lay-verify="required">
+                    </select>
+                </div>
+
+            </div>
+
+            <div class="layui-form-item required">
+                <label class="layui-form-label required">docker </label>
+
+                <div class="layui-input-block">
+                    <select name="dockerId" lay-filter="dockerId" id="dockerId"
+                            lay-verify="required">
+                    </select>
+                </div>
+
+            </div>
+
+            <div class="layui-form-item required">
+                <label class="layui-form-label">dockerfile </label>
+
+                <div class="layui-input-inline" style="width: 400px">
+                    <select name="dockerfileId" lay-filter="dockerfileId" id="dockerfileId" lay-verify="required">
+                    </select>
+                </div>
+
+                <div class="layui-input-inline" style="width: 400px">
+                  <button type="button" class="layui-btn layui-btn-primary layui-border-blue" onclick="viewDockerfile()"> 查看</button>
+                  <button type="button" class="layui-btn layui-btn-primary layui-border-blue" onclick="editDockerfile()"> 编辑</button>
+                </div>
+
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">version</label>
+                <div class="layui-input-block">
+                    <input type="text" name="version" lay-verify="version" autocomplete="off" placeholder="version"
+                           class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">description</label>
+                <div class="layui-input-block">
+                    <textarea class="layui-textarea" name="description" maxlength="200"
+                              placeholder="length 200"></textarea>
+                </div>
+            </div>
+            <!--上传按钮-->
+            <div class="layui-form-item">
+                <label class="layui-form-label">choose jar or war</label>
+                <div class="layui-input-inline">
+                    <button type="button" class="layui-btn" id="test1">
+                        <i class="layui-icon">&#xe67c;</i>upload
+                    </button>
+                </div>
+                <div class="layui-form-mid layui-word-aux" id="uploadResult"></div>
+                <input hidden="hidden" id="tempFileId" value="">
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">process</label>
+                <div class="layui-input-block">
+                    <div class="layui-progress layui-progress-big" lay-filter="demo-process" lay-showPercent="true">
+                        <div class="layui-progress-bar" lay-percent="0%"></div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button class="layui-btn layui-disabled" lay-submit="" lay-filter="demo1" id="submitBtn"
+                            disabled="disabled">立即提交
+                    </button>
+                </div>
+            </div>
+        </form>
+
+
+    </div>
+</div>
+<script src="https://cdn.bootcdn.net/ajax/libs/dayjs/1.11.6/dayjs.min.js"></script>
+<script src="../lib/layui-v2.6.3/layui.js" charset="utf-8"></script>
+<!-- 注意：如果你直接复制所有代码到本地，上述js路径需要改成你本地的 -->
+<script>
+    layui.use(['form', 'layedit', 'laydate', 'upload', 'element'], function () {
+        var form = layui.form
+            , layer = layui.layer
+            , layedit = layui.layedit
+            , upload = layui.upload
+            , element = layui.element
+            , laydate = layui.laydate
+            , $ = layui.$;
+
+
+        //日期
+        laydate.render({
+            elem: '#date'
+        });
+        laydate.render({
+            elem: '#date1'
+        });
+
+        $.ajax({
+            url: '../k8s/record/list',
+            type: 'POST',
+            data: {},
+            async: false,
+            success: function (result) {
+
+                if (result.code === 10000) {
+                    $('#k8sId').empty()
+                    const selectList = result.data || []
+                    selectList.forEach((selectItem, selectIndex) => {
+                        $('#k8sId').append(`<option value="${selectItem.id}" ${selectIndex === 0?'selected':''} >${selectItem.clusterName + ' '+selectItem.apiServerUrl}</option>`)
+                    })
+                    $('#k8sId').append(`<option value="1"  >123</option>`)
+                    form.render()
+
+                    console.log( $('#k8sId').val())
+
+                } else {
+                    parent.layer.alert(result.msg)
+                }
+
+            }
+        })
+
+        //创建一个编辑器
+        var editIndex = layedit.build('LAY_demo_editor');
+
+        function reloadDeploy() {
+            $.ajax({
+                url: '../deploy/list' + '?k8sId=' + $('#k8sId').val(),
+                type: 'GET',
+                success: function (result) {
+                    console.log(result)
+                    $("#targetDeployment").empty()
+                    if (result.code === 10000) {
+                        const arr = result.data || []
+                        $("#targetDeployment").append(`<option value="">请选择</option>`)
+                        arr.forEach(item => {
+                            $("#targetDeployment").append(`<option value="${item.name}">${item.name}</option>`)
+
+                        })
+
+                    }
+                    form.render()
+                }
+            })
+        }
+
+        reloadDeploy()
+
+        form.on('select(k8sId)', ()=> {
+            reloadDeploy()
+        })
+
+
+
+
+        $.ajax({
+            url: '../docker/image/listDockerApiRecord',
+            type: 'GET',
+            success: function (result) {
+                console.log(result)
+                if (result.code === 10000) {
+                    const arr = result.data || []
+                    $("#dockerId").empty()
+                    $("#dockerId").append(`<option value="">请选择</option>`)
+                    arr.forEach(item => {
+                        $("#dockerId").append(`<option value="${item.id}">${item.dockerName}: ${item.hostPath}</option>`)
+
+                    })
+                    form.render()
+                }
+            }
+        })
+
+        form.on('select(dockerId)', function (data) {
+            console.log('select', data.value)
+
+            $.ajax({
+                url: '../dockerfile/list?dockerId=' + data.value,
+                type: 'GET',
+                success: function (result) {
+                    console.log(result)
+                    if (result.code === 10000) {
+                        const arr = result.data || []
+                        $("#dockerfileId").empty()
+                        $("#dockerfileId").append(`<option value="">请选择</option>`)
+                        arr.forEach(item => {
+                            if (item.isReadonly === false) {
+                                $("#dockerfileId").append(`<option value="${item.id}">${item.templateName}</option>`)
+                            }
+
+                        })
+                        form.render()
+                    }
+                }
+            })
+
+        });
+        //自定义验证规则
+        form.verify({
+            title: function (value) {
+                if (value.length < 5) {
+                    return '标题至少得5个字符啊';
+                }
+            }
+            , pass: [
+                /^[\S]{6,12}$/
+                , '密码必须6到12位，且不能出现空格'
+            ]
+            , content: function (value) {
+                layedit.sync(editIndex);
+            }
+        });
+
+        //监听指定开关
+        form.on('switch(switchTest)', function (data) {
+            layer.msg('开关checked：' + (this.checked ? 'true' : 'false'), {
+                offset: '6px'
+            });
+            layer.tips('温馨提示：请注意开关状态的文字可以随意定义，而不仅仅是ON|OFF', data.othis)
+        });
+
+        //监听提交
+        form.on('submit(demo1)', function (data) {
+            // layer.alert(JSON.stringify(data.field), {
+            //     title: '最终的提交信息'
+            // })
+            if (data.field.targetDeployment === '') {
+                layer.msg('please choose deploy')
+                return false
+            }
+            let tempFileId =  document.getElementById('tempFileId').value
+            if (tempFileId === '') {
+                layer.msg('先上传文件')
+                return false
+            }
+            data.field.tempFileId = tempFileId
+            $.post('../docker/image/build/history/createBuildTask' + "?dockerId=" + $("#dockerId").val()+'&k8sId='+$('#k8sId').val(), data.field, function (result) {
+                if (result.code === 10000) {
+                    parent.layer.msg('task commit success')
+                    parent.renderTable()
+                    parent.closeBuildTaskWindow()
+                }
+            })
+            data.field.file = null
+            return false;
+        });
+
+        const version = dayjs().format('YYYYMMDDHHmmss')
+        form.val('build-form', {
+            version
+        })
+
+        //执行实例
+        var uploadInst = upload.render({
+            elem: '#test1' //绑定元素
+            , accept: 'file'
+            , exts: 'jar|war'
+            , url: '../docker/image/build/history/uploadWarOrJar' //上传接口
+            , progress: function (n, elem, res, index) {
+                var percent = n + '%' //获取进度百分比
+                $("#submitBtn").attr("disabled", "disabled")
+                $("#submitBtn").addClass("layui-disabled")
+                element.progress('demo', percent); //可配合 layui 进度条元素使用
+
+                console.log(elem); //得到当前触发的元素 DOM 对象。可通过该元素定义的属性值匹配到对应的进度条。
+                console.log(res); //得到 progress 响应信息
+                console.log(index); //得到当前上传文件的索引，多文件上传时的进度条控制，如：
+                // element.progress('demo-'+ index, n + '%'); //进度条
+                element.progress('demo-process', n + '%'); //进度条
+            }
+            , done: function (res) {
+                //上传完毕回调
+                $("#submitBtn").attr("disabled", null)
+                $("#submitBtn").removeClass("layui-disabled")
+                if (res.data) {
+                    layer.msg('上传成功', {icon: 1});
+                    $("#uploadResult").html(res.data)
+                   document.getElementById('tempFileId').value = (res.data)
+                } else {
+                    $("#uploadResult").html(res.msg)
+                }
+            }
+            , error: function () {
+                //请求异常回调
+            }
+        });
+
+        /**
+         * 查看dockerfile
+         */
+        function viewDockerfile() {
+            const value = document.getElementById("dockerfileId").value
+            if (value === '') {
+                layer.msg('请先选择dockerfile')
+            } else {
+
+                $.ajax({
+                    url: '../dockerfile/get',
+                    type: 'POST',
+                    data: {
+                        id: value,
+                    },
+                    async: false,
+                    success: function (result) {
+                        layer.open({
+                            title: '配置详情',
+                            type: 1,
+                            shade: 0.2,
+                            maxmin: true,
+                            shadeClose: true,
+                            area: ['60%', '90%'],
+                            content: `
+            <pre  id="dockerfile-view" contenteditable="false"   ></pre>
+             `,
+                            success: function (layero, index) {
+
+                                try {
+                                    document.getElementById('dockerfile-view').innerHTML = result.data.content
+                                } catch (e) {
+                                    //
+                                }
+                            }
+                        });
+                    }
+                })
+
+
+
+            }
+
+        }
+
+        /**
+         * 编辑dockerfile
+         */
+        function editDockerfile() {
+            const value = document.getElementById("dockerfileId").value
+            if (value === '') {
+                layer.msg('请先选择dockerfile')
+            } else {
+
+                $.ajax({
+                    url: '../dockerfile/get',
+                    type: 'POST',
+                    data: {
+                        id: value,
+                    },
+                    async: false,
+                    success: function (result) {
+                        const data = result.data
+
+                        var indexEdit =  layer.open({
+                            title: '编辑配置',
+                            type: 1,
+                            shade: 0.2,
+                            maxmin: true,
+                            shadeClose: true,
+                            area: ['1000px', '90%'],
+                            btn: ['确定','取消'],
+                            content: `
+           <div class="layui-form-item">
+                <label class="layui-form-label">模板名称</label>
+                <div class="layui-input-block">
+                    <input type="text" id="templateName" required name="templateName" autocomplete="off" readonly placeholder="模板名称" class="layui-input">
+                    <input  hidden="hidden" id="targetDockerfileId" required name="targetDockerfileId" autocomplete="off" placeholder="dockerfileId"  >
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">模板内容</label>
+                 <div class="layui-input-block">
+                  <pre  id="dockerfile-edit" contenteditable="true" style="padding: 2px;border: 1px solid gray"  ></pre>
+</div>
+            </div>
+             `,
+                            success: function (layero, index) {
+
+                                try {
+                                    document.getElementById('dockerfile-edit').innerHTML = data.content
+                                    document.getElementById('templateName').value = data.templateName
+                                    document.getElementById('targetDockerfileId').value = data.id
+                                } catch (e) {
+                                    //
+                                }
+                            }, btn1: function () {
+
+                                let templateName = document.getElementById('templateName').value
+                                if (templateName === '') {
+                                    templateName = '新模板'+dayjs().format('YYYYMMDDHHmmss')
+                                }
+                                $.ajax({
+                                    url: '../dockerfile/edit',
+                                    type: 'POST',
+                                    data: {
+                                        id: document.getElementById('targetDockerfileId').value,
+                                        content: document.getElementById('dockerfile-edit').innerText,
+                                        templateName: templateName
+                                    },
+                                    async: false,
+                                    success: function (result) {
+                                        if (result.code === 10000) {
+                                            layer.msg('保存成功')
+                                        }else {
+                                            layer.msg(result.msg)
+                                        }
+
+                                        layer.close(indexEdit)
+                                    }
+                                })
+
+                            }
+                        });
+
+
+
+
+                    }
+                })
+
+
+
+
+
+
+            }
+
+        }
+
+        window.editDockerfile = editDockerfile
+
+        window.viewDockerfile = viewDockerfile
+
+    });
+</script>
+
+</body>
+</html>

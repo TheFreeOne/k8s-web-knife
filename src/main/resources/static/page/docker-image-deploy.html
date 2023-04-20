@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>layui</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="../lib/layui-v2.6.3/css/layui.css" media="all">
+    <link rel="stylesheet" href="../css/public.css" media="all">
+</head>
+<body>
+<div class="layuimini-container">
+    <div class="layuimini-main">
+
+
+
+        <fieldset class="layui-elem-field layui-field-title" style="margin-top: 20px;">
+            <legend>deploy docker image</legend>
+        </fieldset>
+
+        <form class="layui-form" action="" lay-filter="deploy-form">
+            <div class="layui-form-item">
+                <label class="layui-form-label">targetDeployment</label>
+
+                    <div class="layui-input-block">
+                        <input type="text" name="targetDeployment"   autocomplete="off" placeholder="targetDeployment" class="layui-input">
+                    </div>
+
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">image tag</label>
+                <div class="layui-input-block">
+                    <input type="text" name="imageTag" autocomplete="off" placeholder="image tag" class="layui-input">
+                </div>
+            </div>
+          <div class="layui-form-item">
+                <label class="layui-form-label">version</label>
+                <div class="layui-input-block">
+                    <input type="text" name="version"  autocomplete="off" placeholder="version" class="layui-input">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">description</label>
+                <div class="layui-input-block">
+                    <textarea class="layui-textarea" name="description" maxlength="200" placeholder="length 200"></textarea>
+                </div>
+            </div>
+
+            <input type="text" hidden="hidden" name="id"  autocomplete="off"  >
+            <input type="text" hidden="hidden" name="k8sId"  autocomplete="off"  >
+
+
+
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button class="layui-btn  " lay-submit="" lay-filter="demo1" id="submitBtn" >发布</button>
+                </div>
+            </div>
+        </form>
+
+
+    </div>
+</div>
+<script src="https://cdn.bootcdn.net/ajax/libs/dayjs/1.11.6/dayjs.min.js"></script>
+<script src="../lib/layui-v2.6.3/layui.js" charset="utf-8"></script>
+<!-- 注意：如果你直接复制所有代码到本地，上述js路径需要改成你本地的 -->
+<script>
+    layui.use(['form', 'layedit', 'laydate', 'upload','element'], function () {
+        var form = layui.form
+            , layer = layui.layer
+            , layedit = layui.layedit
+            , upload = layui.upload
+            , element = layui.element
+            , laydate = layui.laydate
+            , $ = layui.$;
+
+        //日期
+        laydate.render({
+            elem: '#date'
+        });
+        laydate.render({
+            elem: '#date1'
+        });
+
+        //创建一个编辑器
+        var editIndex = layedit.build('LAY_demo_editor');
+        var id =  localStorage.getItem("deployDocketImageId")
+        var buildTaskInfo = {}
+        $.ajax({
+            url: '../docker/image/build/history/getBuildTask?id=' + id,
+            type: 'GET',
+            async: false,
+            success: function (result) {
+                buildTaskInfo = result.data
+            }
+        })
+
+        form.val('deploy-form', buildTaskInfo)
+
+        //自定义验证规则
+        form.verify({
+            title: function (value) {
+                if (value.length < 5) {
+                    return '标题至少得5个字符啊';
+                }
+            }
+            , pass: [
+                /^[\S]{6,12}$/
+                , '密码必须6到12位，且不能出现空格'
+            ]
+            , content: function (value) {
+                layedit.sync(editIndex);
+            }
+        });
+
+        //监听指定开关
+        form.on('switch(switchTest)', function (data) {
+            layer.msg('开关checked：' + (this.checked ? 'true' : 'false'), {
+                offset: '6px'
+            });
+            layer.tips('温馨提示：请注意开关状态的文字可以随意定义，而不仅仅是ON|OFF', data.othis)
+        });
+
+        //监听提交
+        form.on('submit(demo1)', function (data) {
+            // layer.alert(JSON.stringify(data.field), {
+            //     title: '最终的提交信息'
+            // })
+            if (data.field.targetDeployment === '') {
+                layer.msg('please choose deploy')
+                return false
+            }
+            const formData = data.field
+
+            formData.imageBuildId = formData.id
+            formData.id = null
+            $.post('../docker/image/build/history/createDeployTask',formData, function (result) {
+                if (result.code===10000) {
+                    parent.layer.msg('deploy task commit success')
+                   parent.goDeploymentManager()
+                    var iframeIndex = parent.layer.getFrameIndex(window.name);
+                    parent.layer.close(iframeIndex);
+                } else {
+                    parent.layer.alert(result.msg)
+                }
+            })
+            data.field.file = null
+            return false;
+        });
+
+        const version = dayjs().format('YYYYMMDDHHmmss')
+        form.val('build-form',{
+            version
+        })
+
+        //执行实例
+        var uploadInst = upload.render({
+            elem: '#test1' //绑定元素
+            ,accept: 'file'
+            ,exts: 'jar|war'
+            ,url: '../docker/image/build/history/uploadWarOrJar' //上传接口
+            ,progress: function(n, elem, res, index){
+                var percent = n + '%' //获取进度百分比
+                $("#submitBtn").attr("disabled", "disabled")
+                $("#submitBtn").addClass("layui-disabled")
+                element.progress('demo', percent); //可配合 layui 进度条元素使用
+
+                console.log(elem); //得到当前触发的元素 DOM 对象。可通过该元素定义的属性值匹配到对应的进度条。
+                console.log(res); //得到 progress 响应信息
+                console.log(index); //得到当前上传文件的索引，多文件上传时的进度条控制，如：
+                // element.progress('demo-'+ index, n + '%'); //进度条
+                element.progress('demo-process', n + '%'); //进度条
+            }
+            ,done: function(res){
+                //上传完毕回调
+                $("#submitBtn").attr("disabled", null)
+                $("#submitBtn").removeClass("layui-disabled")
+            }
+            ,error: function(){
+                //请求异常回调
+            }
+        });
+
+    });
+</script>
+
+</body>
+</html>

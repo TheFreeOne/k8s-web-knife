@@ -1,0 +1,59 @@
+{
+  "homeInfo": {
+    "title": "首页",
+    "href": "page/welcome-1.html?t=1"
+  },
+  "logoInfo": {
+    "title": "LAYUI MINI",
+    "image": "images/logo.png",
+    "href": ""
+  },
+  "menuInfo": [
+    {
+      "title": "常规管理",
+      "icon": "fa fa-address-book",
+      "href": "",
+      "target": "_self",
+      "child": [
+        {
+          "title": "主菜单",
+          "href": "",
+          "icon": "fa fa-home",
+          "target": "_self",
+          "child": [
+            {
+              "title": "k8s & docker",
+              "href": "page/k8s-and-docker-manager.html",
+              "target": "_self"
+            },{
+              "title": "K8s Nodes",
+              "href": "page/node-manager.html",
+              "target": "_self"
+            },
+            {
+              "title": "K8s Deployments",
+              "href": "page/deployment-manager.html",
+              "target": "_self"
+            },{
+              "title": "K8s Services",
+              "href": "page/service-manager.html",
+              "target": "_self"
+            },{
+              "title": "Docker Images",
+              "href": "page/docker-image-manager.html",
+              "target": "_self"
+            },{
+              "title": "Docker Images Build History",
+              "href": "page/docker-build-manager.html",
+              "target": "_self"
+            },{
+              "title": "Docker Images Deploy History",
+              "href": "page/docker-deploy-manager.html",
+              "target": "_self"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

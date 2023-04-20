@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>layui</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="../lib/layui-v2.6.3/css/layui.css" media="all">
+    <link rel="stylesheet" href="../lib/highlight-11.7.0/styles/default.min.css" media="all">
+    <link rel="stylesheet" href="../css/public.css" media="all">
+    <style>
+
+        pre {
+            overflow: auto
+        }
+
+        .editarea {
+            width: 1px;
+            height: 90vh;
+            flex-grow: 1
+        }
+
+    </style>
+</head>
+<body>
+<div class="layuimini-container">
+    <div class="layuimini-main">
+
+
+        <div class="layui-tab" lay-filter="infoTabs">
+            <ul class="layui-tab-title">
+                <li class="layui-this" lay-id="detail">详情信息</li>
+<!--                <li lay-id="containersConfig">容器配置</li>-->
+<!--                <li lay-id="lookEvents">日志</li>-->
+<!--                <li>商品管理</li>-->
+<!--                <li>订单管理</li>-->
+            </ul>
+            <div class="layui-tab-content">
+                <div class="layui-tab-item layui-show">
+
+                    <fieldset class="layui-elem-field layui-field-title site-title">
+                        <legend><a name="color-design">基本信息</a></legend>
+                    </fieldset>
+                    <form class="layui-form" action="">
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">标签</label>
+                            <div class="layui-input-block" id="deployment-labels">
+
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">annotations</label>
+                            <div class="layui-input-block" id="deployment-annotations">
+
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">更新策略</label>
+                            <div class="layui-input-block" id="deployment-strategy">
+
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">Pods status</label>
+                            <div class="layui-input-block" id="deployment-pods-status">
+
+                            </div>
+                        </div>
+
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">Conditions</label>
+                            <div class="layui-input-block" id="deployment-conditions">
+                                <div class="layui-table">
+                                    <table id="conditionsTable" lay-filter="conditionsTable"></table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <fieldset class="layui-elem-field layui-field-title site-title">
+                            <legend><a name="color-design">New Replica Set</a></legend>
+
+                            <div class="layui-form" lay-filter="newReplicaSetForm">
+                                <div class="layui-form-item">
+                                    <div class="layui-inline" style=" min-width: 466px; ">
+                                        <label class="layui-form-label">名称</label>
+                                        <div class="layui-input-inline">
+                                            <input class="layui-input" style="width: 360px" name="name" readonly>
+                                        </div>
+                                    </div>
+
+                                    <div class="layui-inline" style=" min-width: 466px; ">
+                                        <label class="layui-form-label">image</label>
+                                        <div class="layui-input-inline">
+                                            <input class="layui-input" style="width: 360px" name="image" readonly>
+                                        </div>
+                                    </div>
+
+                                    <div class="layui-inline" style=" min-width: 466px; ">
+                                        <label class="layui-form-label">命名空间</label>
+                                        <div class="layui-input-inline">
+                                            <input class="layui-input" style="width: 360px" name="namespace"
+                                                   readonly>
+                                        </div>
+                                    </div>
+                                    <div class="layui-inline" style=" min-width: 466px; ">
+                                        <label class="layui-form-label">Resource Version</label>
+                                        <div class="layui-input-inline">
+                                            <input class="layui-input" style="width: 360px" name="resourceVersion"
+                                                   readonly>
+                                        </div>
+                                    </div>
+
+                                    <div class="layui-inline" style=" min-width: 466px; ">
+                                        <label class="layui-form-label">创建时间</label>
+                                        <div class="layui-input-inline">
+                                            <input class="layui-input" style="width: 360px" name="createTime"
+                                                   readonly>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">标签</label>
+                                <div class="layui-input-block" id="new-replica-set-labels">
+
+                                </div>
+                            </div>
+
+
+                        </fieldset>
+
+
+                    </form>
+
+                    <fieldset class="layui-elem-field layui-field-title site-title">
+                        <legend><a name="color-design">container</a></legend>
+                    </fieldset>
+                    <div class="layui-form" lay-filter="firstContainerForm">
+                        <div class="layui-form-item">
+                            <div class="layui-inline" style=" min-width: 466px; ">
+                                <label class="layui-form-label">名称</label>
+                                <div class="layui-input-inline">
+                                    <input class="layui-input" style="width: 360px" name="name" readonly>
+                                </div>
+                            </div>
+
+                            <div class="layui-inline" style=" min-width: 466px; ">
+                                <label class="layui-form-label">image</label>
+                                <div class="layui-input-inline">
+                                    <input class="layui-input" style="width: 360px" name="image" readonly>
+                                </div>
+                            </div>
+                            <div class="layui-inline" style=" min-width: 466px; ">
+                                <label class="layui-form-label">镜像拉取策略</label>
+                                <div class="layui-input-inline" style="width: 360px;">
+                                    <select name="imagePullPolicy" id="imagePullPolicy" >
+                                        <option value="Always">(Always)总是从镜像仓库获取镜像</option>
+                                        <option value="Never"    >(Never)使用本地镜像</option>
+                                        <option value="IfNotPresent"    >(IfNotPresent)仅当本地没有镜像时，才从镜像仓库获取镜像</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <fieldset class="layui-elem-field layui-field-title site-title">
+                        <legend><a name="color-design">replica set list</a></legend>
+                    </fieldset>
+
+                    <div class="layui-table">
+                        <table id="replicaSetListTable" lay-filter="replicaSetListTable"></table>
+                    </div>
+
+                    <fieldset class="layui-elem-field layui-field-title site-title">
+                        <legend><a name="color-design">实例列表</a></legend>
+                    </fieldset>
+
+                    <div class="layui-table">
+                        <table id="simplePodTable" lay-filter="simplePodTable"></table>
+                    </div>
+
+
+                </div>
+<!--                <div class="layui-tab-item">-->
+<!--                    // 容器模板-->
+
+<!--                </div>-->
+<!--                <div class="layui-tab-item">内容3</div>-->
+<!--                <div class="layui-tab-item">内容4</div>-->
+<!--                <div class="layui-tab-item">内容5</div>-->
+            </div>
+        </div>
+
+
+        <script type="text/html" id="toolbarDemo">
+            <div class="layui-btn-container">
+                <button class="layui-btn layui-btn-normal layui-btn-sm data-add-btn" lay-event="add"> 添加</button>
+                <button class="layui-btn layui-btn-sm layui-btn-danger data-delete-btn" lay-event="delete"> 删除
+                </button>
+            </div>
+        </script>
+
+        <table class="layui-hide" id="currentTableId" lay-filter="currentTableFilter"></table>
+
+        <script type="text/html" id="currentTableBar">
+            <a class="layui-btn layui-btn-primary layui-btn-xs data-count-edit" lay-event="detail">查看</a>
+            <a class="layui-btn layui-btn-primary layui-btn-xs data-count-edit" lay-event="view">上线</a>
+            <a class="layui-btn layui-btn-primary layui-btn-xs data-count-edit" lay-event="view">下线</a>
+            <a class="layui-btn layui-btn-primary layui-btn-xs data-count-edit" lay-event="view">重启</a>
+            <a class="layui-btn layui-btn-primary layui-btn-xs data-count-edit" lay-event="edit">发布</a>
+            <a class="layui-btn layui-btn-normal layui-btn-xs data-count-edit" lay-event="edit">编辑</a>
+            <a class="layui-btn layui-btn-xs layui-btn-danger data-count-delete" lay-event="delete">删除</a>
+        </script>
+
+    </div>
+</div>
+<script src="../lib/layui-v2.6.3/layui.js" charset="utf-8"></script>
+<script src="../lib/js-yaml-4.1.0/js-yaml.js" charset="utf-8"></script>
+<script src="../lib/highlight-11.7.0/highlight.js" charset="utf-8"></script>
+<script src="../lib/highlight-11.7.0/languages/yaml.min.js" charset="utf-8"></script>
+<script src="../lib/highlight-11.7.0/languages/json.min.js" charset="utf-8"></script>
+<script>
+
+    console.log(window.yaml)
+    window.k8sId= parent.k8sId
+
+    layui.use(['form', 'table'], function () {
+
+
+        function toYaml() {
+            let json = document.getElementById('config-json')?.innerText;
+            if (json) {
+                try {
+                    let jsonObj = JSON.parse(json);
+                    // console.debug(jsyaml.dump(jsonObj))
+                    const yamlResult = hljs.highlight("yaml", jsyaml.dump(jsonObj)).value;
+                    const jsonResult = hljs.highlight("json", json).value;
+                    console.log(yamlResult, jsonResult)
+                    document.getElementById('config-yaml').innerHTML = yamlResult
+                } catch (e) {
+                    alert(e)
+                }
+            }
+        }
+
+        toYaml()
+        window.toYaml = toYaml
+
+        function toJson() {
+            let yaml = document.getElementById('config-yaml')?.innerText;
+            if (yaml) {
+                try {
+                    // 需要把json转成字符串
+                    let json = JSON.stringify(jsyaml.load(yaml), null, 2);
+                    const jsonResult = hljs.highlight("json", json).value;
+                    const yamlResult = hljs.highlight("yaml", yaml).value;
+                    document.getElementById('config-json').innerHTML = jsonResult
+                } catch (e) {
+                    alert(e)
+                }
+            }
+        }
+
+        window.toJson = toJson
+
+        hljs.highlightAll();
+
+        var $ = layui.jquery,
+            form = layui.form,
+            element = layui.element,
+            table = layui.table;
+
+        window.deploy = {}
+
+        const namespace = localStorage.getItem("currentNamespace")
+        const name = localStorage.getItem("currentName")
+
+
+        $.get(`../deploy/get/${namespace}/${name}` + '?k8sId=' + window.k8sId, {}, (res) => {
+
+            renderDeploymentInformation(res.data)
+        })
+
+        function renderDeploymentInformation(deploy) {
+
+            window.deploy = deploy
+            const replicaSetList = deploy.replicaSetList
+            //第一个实例
+            table.render({
+                elem: '#simplePodTable'
+
+                , cols: [[ //表头
+                    {type: 'numbers', title: '序号 '}
+                    , {
+                        field: 'name', title: '实例名称', minWidth: 290, templet: function (data) {
+                            let html = data.name
+                            if (replicaSetList && replicaSetList.length > 1) {
+                                const newReplicaSet = deploy.newReplicaSet
+                                if (data.name.startsWith(newReplicaSet.name)) {
+                                    html += `<button class="layui-btn layui-btn-xs layui-btn-primary layui-border-blue">new</button>`
+                                }
+                            }
+                            return html
+                        }
+                    }
+                    , {field: 'phase', title: '状态', width: 150,align: 'center'}
+                    , {field: 'ready', title: '是否准备', width: 150}
+                    , {field: 'hostIP', title: '节点IP', width: 150, align: 'center'}
+                    , {field: 'podIP', title: '实例IP', width: 150, align: 'center'}
+                    , {field: 'restartCount', title: '重启次数', width: 100, align: 'center'}
+                    , {field: 'createAt', title: '启动时间', width: 170}
+                    , {
+                        title: '操作', width: 170, templet: function (data) {
+                            return `<button class="layui-btn layui-btn-xs" onclick="podDetail('${data.namespace}','${data.name}')">详情</button>
+                                    <button class="layui-btn layui-btn-xs" onclick="podLogs('${data.namespace}','${data.name}')">logs</button>
+`
+                        }
+                    }
+                ]],
+                data: deploy.podVoList
+                , even: true
+            });
+
+
+            $('#deployment-labels').empty()
+            const labels = deploy.labels || []
+            const labelsKeys = Object.keys(labels)
+            labelsKeys.forEach((item) => {
+                $('#deployment-labels').append(`<button type="button"class="layui-btn layui-btn-primary layui-border-blue">${item}:${labels[item]}</button>`)
+            })
+
+            $('#deployment-annotations').empty()
+            const annotations = deploy.annotations || []
+            const annotationsKeys = Object.keys(annotations)
+            annotationsKeys.forEach((item) => {
+                const value = annotations[item]
+                if (value) {
+                    if (value.startsWith('{') && (value.endsWith('}') || value.endsWith('}\r\n') || value.endsWith('}\n'))) {
+                        $('#deployment-annotations').append(`<button type="button"class="layui-btn layui-btn-primary layui-border-blue" onclick="showAnnotationValue('${item}')">${item}</button>`)
+                    } else {
+                        $('#deployment-annotations').append(`<button type="button"class="layui-btn layui-btn-primary ">${item}:${annotations[item]}</button>`)
+                    }
+                }
+
+            })
+
+            $('#deployment-strategy').empty()
+            const strategy = deploy.strategy
+            if (strategy) {
+                if (strategy.type === 'RollingUpdate') {
+                    $('#deployment-strategy').append(`<button type="button"class="layui-btn layui-btn-primary ">滚动更新</button>`)
+                }
+                if (strategy.type === 'Recreate') {
+                    $('#deployment-strategy').append(`<button type="button"class="layui-btn layui-btn-primary ">重新创建</button>`)
+                }
+                if (strategy.maxSurgeString !== undefined) {
+                    $('#deployment-strategy').append(`<button type="button"class="layui-btn layui-btn-primary ">最大超量(maxSurge): ${strategy.maxSurgeString}</button>`)
+                }
+                if (strategy.maxSurgeInt !== undefined) {
+                    $('#deployment-strategy').append(`<button type="button"class="layui-btn layui-btn-primary ">最大超量(maxSurge): ${strategy.maxSurgeInt}</button>`)
+                }
+                if (strategy.maxUnavailableString !== undefined) {
+                    $('#deployment-strategy').append(`<button type="button"class="layui-btn layui-btn-primary ">最大不可用(maxUnavailable): ${strategy.maxUnavailableString}</button>`)
+                }
+                if (strategy.maxUnavailableInt !== undefined) {
+                    $('#deployment-strategy').append(`<button type="button"class="layui-btn layui-btn-primary ">最大不可用(maxUnavailable): ${strategy.maxUnavailableInt}</button>`)
+                }
+
+                $('#deployment-strategy').append(`<button type="button"class="layui-btn layui-btn-normal " onclick="editUpdateStrategy()">修改更新策略</button>`)
+            }
+
+            $("#deployment-pods-status").empty()
+            const status = deploy.status
+            const statusKeys = Object.keys(status)
+            statusKeys.forEach((item) => {
+                if (item !== 'conditions') {
+                    $('#deployment-pods-status').append(`<button type="button"class="layui-btn layui-btn-primary ">${item}:${status[item]}</button>`)
+                }
+            })
+
+            const conditions = deploy.status.conditions
+            if (conditions) {
+                //展示已知数据
+                table.render({
+                    elem: '#conditionsTable'
+                    , cols: [[ //标题栏
+                        {field: 'type', title: '类别', width: 105}
+                        , {field: 'status', title: '状态', width: 80}
+                        , {field: 'lastUpdateTime', title: '最后检测时间', width: 220}
+                        , {field: 'lastTransitionTime', title: '最后迁移时间', width: 220}
+                        , {field: 'reason', title: '原因'}
+                        , {field: 'message', title: '信息'}
+                    ]]
+                    , data: conditions
+                    //,skin: 'line' //表格风格
+                    , even: true
+                    //,page: true //是否显示分页
+                    //,limits: [5, 7, 10]
+                    //,limit: 5 //每页默认显示的数量
+                })
+            }
+
+            if (deploy.replicaSetList[0]) {
+                console.debug('deploy.replicaSetList[0]', deploy.replicaSetList[0])
+                form.val('newReplicaSetForm', deploy.newReplicaSet)
+                $("#new-replica-set-labels").empty()
+                const replicaSetLabels = deploy.replicaSetList[0].labels
+                const replicaSetLabelKey = Object.keys(replicaSetLabels)
+                replicaSetLabelKey.forEach((item) => {
+
+                    $('#new-replica-set-labels').append(`<button type="button"class="layui-btn layui-btn-sm layui-btn-primary ">${item}:${replicaSetLabels[item]}</button>`)
+
+                })
+            }
+
+            if (deploy.replicaSetList) {
+
+                //展示已知数据
+                table.render({
+                    elem: '#replicaSetListTable'
+                    , cols: [[ //标题栏
+                        {field: 'name', title: '名称', width: 249}
+                        , {field: 'image', title: '镜像', width: 170}
+                        , {
+                            field: 'labels', title: '标签', minWidth: 220, templet: function (data) {
+                                let text = ''
+                                const labelKeys = Object.keys(data.labels)
+                                labelKeys.forEach((item, index, arr) => {
+                                    text += `<span class="layui-badge layui-bg-blue">${item}: ${data.labels[item]}</span> &emsp;`
+                                    if (index !== arr.length - 1) {
+                                        // text += '<br/>'
+                                    }
+                                })
+                                return text
+                            }
+                        }
+                        , {field: 'resourceVersion', title: 'Resource Version', width: 220}
+                        , {
+                            field: 'pods', title: 'Pods', width: 220, templet: function (data) {
+                                return `${data.availableReplicas || 0}/${data.replicas}`
+                            }
+                        }
+                        , {field: 'createTime', title: '创建时间', width: 220}
+
+                    ]]
+                    , data: deploy.replicaSetList
+                    //,skin: 'line' //表格风格
+                    , even: true
+                    //,page: true //是否显示分页
+                    //,limits: [5, 7, 10]
+                    //,limit: 5 //每页默认显示的数量
+                })
+
+            }
+
+            const containers = deploy.containers
+            if (containers && containers.length > 0) {
+
+                form.val('firstContainerForm', containers[0])
+            }
+
+
+        }
+
+
+        function showAnnotationValue(item) {
+            const jsonObject = JSON.parse(window.deploy.annotations[item])
+            const text = JSON.stringify(jsonObject, null, 2)
+
+
+            const yamlObject = jsyaml.dump(jsonObject)
+
+            var index = layer.open({
+                title: '配置详情',
+                type: 1,
+                shade: 0.2,
+                maxmin: true,
+                shadeClose: true,
+                area: ['90%', '90%'],
+//            content: `<div style="display: flex;height: 100%">
+// <textarea class="layui-textarea" id="config-json" style="height: 100%;flex-grow: 1;" >${text}</textarea>
+// <textarea class="layui-textarea" id="config-yaml" style="height: 100%;flex-grow: 1;">${yamlObject}</textarea>
+//
+// </div>`
+
+                content: `
+<div style="display: flex;">
+    <button class="layui-btn" style=" flex-grow: 1;" onclick="toYaml()">转yaml -></button>
+    <button class="layui-btn" style=" flex-grow: 1;" onclick="toJson()"><- 转json</button>
+</div>
+<div style="display: flex;height: 100%">
+<pre class="textarea fullHeight fixed-size" id="config-json" contenteditable="true"  style="height: 100%;flex-grow: 1;" onpaste="setTimeout(toYaml, 1)" ></pre>
+<pre class="textarea fullHeight fixed-size" id="config-yaml" contenteditable="true" style="height: 100%;flex-grow: 1;" onpaste="setTimeout(toJson, 1)"></pre>
+
+</div>`,
+                success: function (layero, index) {
+
+                    try {
+                        document.getElementById('config-yaml').innerHTML = hljs.highlight("yaml", yamlObject).value
+                        document.getElementById('config-json').innerHTML = hljs.highlight("json", text).value
+                        // document.getElementById('config-json').innerHTML = text
+                    } catch (e) {
+                        console.error(e)
+                    }
+                }
+            });
+        }
+
+        window.showAnnotationValue = showAnnotationValue
+        // 监听搜索操作
+        form.on('submit(data-search-btn)', function (data) {
+            var result = JSON.stringify(data.field);
+            layer.alert(result, {
+                title: '最终的搜索信息'
+            });
+
+            //执行搜索重载
+            table.reload('currentTableId', {
+                page: {
+                    curr: 1
+                }
+                , where: {
+                    searchParams: result
+                }
+            }, 'data');
+
+            return false;
+        });
+
+        /**
+         * toolbar监听事件
+         */
+        table.on('toolbar(currentTableFilter)', function (obj) {
+            if (obj.event === 'add') {  // 监听添加操作
+                var index = layer.open({
+                    title: '添加用户',
+                    type: 2,
+                    shade: 0.2,
+                    maxmin: true,
+                    shadeClose: true,
+                    area: ['100%', '100%'],
+                    content: '../page/table/add.html',
+                });
+                $(window).on("resize", function () {
+                    layer.full(index);
+                });
+            } else if (obj.event === 'delete') {  // 监听删除操作
+                var checkStatus = table.checkStatus('currentTableId')
+                    , data = checkStatus.data;
+                layer.alert(JSON.stringify(data));
+            }
+        });
+
+        //监听表格复选框选择
+        table.on('checkbox(currentTableFilter)', function (obj) {
+            console.log(obj)
+        });
+
+        table.on('tool(currentTableFilter)', function (obj) {
+            var data = obj.data;
+            if (obj.event === 'edit') {
+
+                var index = layer.open({
+                    title: '编辑用户',
+                    type: 2,
+                    shade: 0.2,
+                    maxmin: true,
+                    shadeClose: true,
+                    area: ['100%', '100%'],
+                    content: '../page/table/edit.html',
+                });
+                $(window).on("resize", function () {
+                    layer.full(index);
+                });
+                return false;
+            } else if (obj.event === 'delete') {
+                layer.confirm('真的删除行么', function (index) {
+                    obj.del();
+                    layer.close(index);
+                });
+            }
+        });
+
+        // Tab 切换，以改变地址 hash 值
+        element.on('tab(infoTabs)', function (data) {
+            console.log(data);
+            if (data.index === 1) {
+                // 查询容器的信息
+            }
+        });
+
+        function podDetail(podNamespace, podName) {
+            localStorage.setItem('podNamespace', podNamespace)
+            localStorage.setItem('podName', podName)
+            layer.open({
+                title: '应用详情',
+                type: 2,
+                shade: 0.2,
+                maxmin: true,
+                shadeClose: true,
+                area: ['100%', '100%'],
+                content: '../page/pod-detail.html',
+            });
+        }
+
+        window.podDetail = podDetail
+
+        function podLogs(podNamespace, podName) {
+            localStorage.setItem('podNamespace', podNamespace)
+            localStorage.setItem('podName', podName)
+
+            var interval1 = null;
+
+            // var source = new EventSource(`/pod/newlogs/${podNamespace}/${podName}?k8sId=` + window.k8sId,{
+            //     headers: {
+            //         'Accept': 'text/event-stream'
+            //     }
+            // });
+            //
+            // source.onmessage = function (event) {
+            //     console.info(event.data);
+            // };
+
+            // return
+
+            var index = layer.open({
+                title: 'log详情',
+                type: 1,
+                shade: 0.2,
+                maxmin: true,
+                shadeClose: true,
+                area: ['90%', '90%'],
+
+                content: `
+<div style="display: flex;">
+    <pre class="textarea fullHeight fixed-size" id="log-pre" contenteditable="false"   ></pre>
+
+</div>`,
+                success: function (layero, index) {
+
+                    interval1 = setInterval(()=> {
+                        $.ajax({
+                            url: `../pod/logs/${podNamespace}/${podName}?k8sId=` + window.k8sId,
+                            type: 'GET',
+                            // data: data.field,
+                            success: function (result) {
+                                if (result.code === 10000) {
+                                    const logpre = document.getElementById('log-pre')
+                                    if (logpre) {
+                                        logpre.innerHTML = result.data;
+                                    } else {
+                                        clearInterval(interval1)
+                                    }
+                                } else {
+                                    layer.msg(result.msg)
+                                    clearInterval(interval1)
+                                }
+                            }
+                        })
+
+                    }, 1000)
+
+                },
+                end: function () {
+                    clearInterval(interval1)
+                }
+            });
+
+
+        }
+
+        window.podLogs = podLogs
+
+        function editUpdateStrategy() {
+
+            localStorage.setItem("deploy", JSON.stringify(window.deploy))
+            localStorage.setItem("updateStrategy", JSON.stringify(window.deploy.strategy))
+            window.strategyEditIndex = layer.open({
+                title: '更新策略',
+                type: 2,
+                shade: 0.2,
+                maxmin: true,
+                shadeClose: true,
+                area: ['1020px', '300px'],
+                content: '../page/strategy-edit.html',
+            });
+        }
+
+        window.editUpdateStrategy = editUpdateStrategy
+
+
+    });
+</script>
+
+</body>
+</html>

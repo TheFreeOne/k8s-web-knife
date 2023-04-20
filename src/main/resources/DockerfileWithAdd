@@ -1,0 +1,30 @@
+# 设置基础镜像
+FROM tomcat:9.0.70-jdk8
+
+MAINTAINER fileonwer
+
+CMD ["bash"]
+
+#使用add 下载，                              放到该目录下并设置文件名，避免下载接口千奇百怪
+# ADD http://192.168.0.142:8080/getWarOrJar  /usr/local/tomcat/webapps/ROOT.war
+# DockerBuildFileDownloadController 下的下载方法 get
+# ADD http://192.168.0.142:8080/getFile/ROOT.war/1/uuid  /usr/local/tomcat/webapps/ROOT.war
+ADD http://${kwk.ip}:8080/download/${kwk.fileId}/${kwk.ticket}/${kwk.filename}  /usr/local/tomcat/webapps/ROOT.war
+
+# 工作目录
+WORKDIR /usr/local/tomcat
+
+#RUN APT-get -y install vim
+
+#设置环境变量 时区
+ENV TZ Asia/Shanghai
+
+# 声明端口
+EXPOSE 8080
+
+# 镜像的标签
+LABEL org.opencontainers.image.authors="runoob"
+
+
+# 执行tomcat的启动命令
+CMD ["/usr/local/tomcat/bin/catalina.sh","run"]

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>layui</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="../lib/layui-v2.6.3/css/layui.css" media="all">
+    <link rel="stylesheet" href="../css/public.css" media="all">
+</head>
+<body>
+<div class="layuimini-container">
+    <div class="layuimini-main">
+
+        <fieldset class="table-search-fieldset">
+            <legend>docker image 发布历史</legend>
+            <div style="margin: 10px 10px 10px 10px">
+                <form class="layui-form layui-form-pane" action="">
+                    <div class="layui-form-item">
+<!--                        <div class="layui-inline">-->
+<!--                            <label class="layui-form-label">类型</label>-->
+<!--                            <div class="layui-input-inline">-->
+<!--                                <select name="imageType" id="imageType">-->
+<!--                                    <option value="all">所有</option>-->
+<!--                                    <option value="parentIdNotEmpty" selected  >自建</option>-->
+<!--                                </select>-->
+<!--                            </div>-->
+
+<!--                        </div>-->
+
+                        <div class="layui-inline">
+                            <button  class="layui-btn layui-btn-primary"  lay-submit lay-filter="data-search-btn"><i class="layui-icon"></i> 搜 索</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </fieldset>
+
+
+
+        <table class="layui-hide" id="currentTableId" lay-filter="currentTableFilter"></table>
+
+
+        <script type="text/html" id="toolbarDemo">
+            <div class="layui-btn-container">
+                <button class="layui-btn layui-btn-normal layui-btn-sm data-add-btn" lay-event="add">添加</button>
+            </div>
+        </script>
+
+    </div>
+</div>
+<script src="../lib/layui-v2.6.3/layui.js" charset="utf-8"></script>
+<script src="../js/lay-config.js?v=1.0.4" charset="utf-8"></script>
+<script>
+    layui.use(['form', 'table','miniTab'], function () {
+        var $ = layui.jquery,
+            form = layui.form,
+            miniTab = layui.miniTab,
+            table = layui.table;
+
+        var list = []
+
+        function renderTable () {
+            table.render({
+                elem: '#currentTableId',
+                url: '../docker/image/deploy/history/page',
+                toolbar: '#toolbarDemo',
+                defaultToolbar: ['filter', 'exports', 'print', {
+                    title: '提示',
+                    layEvent: 'LAYTABLE_TIPS',
+                    icon: 'layui-icon-tips'
+                }],
+                cols: [[
+                    // {type: "checkbox", width: 50},
+                    // {field: 'uid', width: 80, title: 'ID', sort: false},
+                    {field: 'id',   title: '发布单ID',width: 200},
+                    {field: 'imageTag',   title: '镜像NAME',width: 300},
+                    {field: 'targetDeployment',   title: '目标应用',width: 200},
+                    {field: 'createTime',   title: '创建时间',width: 200},
+                    {field: 'description',   title: '描述',minWidth: 100},
+                    {field: 'deployStatus',   title: '状态',width: 200, templet: function (row) {
+                        if (row.deployStatus === 0) {
+                            return '构建中'
+                        } else if (row.deployStatus === 1) {
+                            return `<span class="layui-badge layui-bg-green">成功</span>`
+                        } else if (row.deployStatus === 2) {
+                            return '<span class="layui-badge">失败</span>'
+                        }
+                        }},
+
+                    {title: '操作', width: 130,   align: "center", templet: function (row){
+                            if (row.deployStatus === 0) {
+                                return ''
+                            } else if (row.deployStatus === 1) {
+                                return `<button class="layui-btn layui-btn-xs layui-btn-danger" lay-event="delete">删除</button>`
+                            } else if (row.deployStatus === 2) {
+                                return `<button class="layui-btn layui-btn-xs " onclick="seeReason(${row.id})">原因</button><button class="layui-btn layui-btn-xs layui-btn-danger" lay-event="delete">删除</button>`
+                            }
+
+                        }}
+                ]],
+                limits: [10, 15, 20, 25, 50, 100],
+                limit: 15,
+                page: true,
+                skin: 'line',
+                request: {
+                pageName: 'pageNumber' //页码的参数名称，默认：page
+                    ,limitName: 'pageSize' //每页数据量的参数名，默认：limit
+                },
+                parseData: function(res){ //res 即为原始返回的数据
+                    list = res.data.content || []
+                    return {
+                        "code": res.code === 10000?0:500, //解析接口状态
+                        "msg": res.code === 10000?'查询成功':'查询失败', //解析提示文本
+                        "count": res.data?.totalElements || 0, //解析数据长度
+                        "data": res.data.content || [] //解析数据列表
+                    };
+                }
+            });
+        }
+
+        renderTable()
+        window.renderTable =renderTable
+
+        form.on('submit(data-search-btn)', function (data) {
+            renderTable()
+            return false
+        })
+
+        table.on('toolbar(currentTableFilter)', function (obj) {
+            console.debug(obj)
+            if (obj.event==='add') {
+              window.buildTaskWindow = layer.open({
+                    title: '构建镜像',
+                    type: 2,
+                    shade: 0.2,
+                    maxmin:true,
+                    shadeClose: true,
+                    area: ['100%', '100%'],
+                    content: '../page/docker-image-build.html',
+                });
+            }
+        })
+        table.on('tool(currentTableFilter)', function (obj) {
+            console.debug(obj)
+            if (obj.event==='delete') {
+                layer.confirm('确定删除?', {icon: 3, title:'提示'}, function(index){
+                    //do something
+                    $.ajax({
+                        url: '../docker/image/deploy/history/delete',
+                        type: 'POST',
+                        data: {
+                            id: obj.data.id
+                        },
+                        success: function (result) {
+                            console.log(result)
+                            if (result.code === 10000) {
+                                renderTable()
+                                parent.layer.msg('删除成功')
+                            } else {
+                                parent.layer.alert(result.msg)
+                            }
+
+                        }
+                    })
+                    layer.close(index);
+                });
+            }
+        })
+
+        function closeBuildTaskWindow () {
+           if (window.buildTaskWindow) {
+               layer.close(window.buildTaskWindow)
+           }
+        }
+
+        window.closeBuildTaskWindow = closeBuildTaskWindow
+
+        function deployDocketImage(id) {
+            localStorage.setItem("deployDocketImageId", id)
+             layer.open({
+                title: '发布',
+                type: 2,
+                shade: 0.2,
+                maxmin:true,
+                shadeClose: true,
+                area: ['1000px', '490px'],
+                content: '../page/docker-image-deploy.html',
+            });
+        }
+        window.deployDocketImage = deployDocketImage
+
+        function seeReason (id){
+            const target = list.find(item => item.id === id )
+            if (target) {
+
+
+                var indexEdit =  layer.open({
+                    title: '原因',
+                    type: 1,
+                    shade: 0.2,
+                    maxmin: true,
+                    shadeClose: true,
+                    area: ['1000px', '90%'],
+                    // btn: ['确定','取消'],
+                    content: `
+                  <pre  id="dockerfile-reason" contenteditable="false"  ></pre>
+                  <span>--------------------------------------------------------------------------</span>
+                  <pre  id="dockerfile-ac-content" contenteditable="false"  ></pre>
+
+             `,
+                    success: function (layero, index) {
+                        document.getElementById('dockerfile-reason').innerHTML = target.errInfo
+                        document.getElementById('dockerfile-ac-content').innerHTML = target.actualDockerfileContent
+                        try {
+
+                        } catch (e) {
+                            //
+                        }
+                    }
+                });
+
+
+
+
+            }
+        }
+
+        window.seeReason = seeReason
+
+        function goDeploymentManager() {
+            // 打开新的窗口
+            miniTab.openNewTabByIframe({
+                href:"page/deployment-manager.html",
+                title:"Deployments",
+            });
+        }
+        window.goDeploymentManager = goDeploymentManager
+    });
+</script>
+
+</body>
+</html>

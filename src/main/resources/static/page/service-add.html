@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>layui</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="../../lib/layui-v2.6.3/css/layui.css" media="all">
+    <link rel="stylesheet" href="../../css/public.css" media="all">
+    <style>
+        body {
+            background-color: #ffffff;
+        }
+
+        /**
+    layui的输入框高度就是38
+     */
+        .layui-table-cell {
+            height: 38px;
+            line-height: 38px;
+        }
+
+        /**
+        在哪个字段上使用下拉菜单，data-field就等于什么
+         */
+        [data-field='protocol'] .layui-table-cell {
+            overflow: visible !important;
+        }
+    </style>
+</head>
+<body>
+<div class="layui-form layuimini-form">
+
+
+    <div class="layui-form-item">
+        <label class="layui-form-label  required">名称</label>
+        <div class="layui-input-block">
+            <input type="text" name="name" lay-verify="required" autocomplete="off" class="layui-input" autocomplete="off">
+        </div>
+    </div>
+
+    <div class="layui-form-item">
+        <label class="layui-form-label">服务类型</label>
+        <div class="layui-input-block">
+            <select name="type" lay-filter="type"  >
+<!--                <option value="ClusterIP">集群内访问</option>-->
+                <option value="NodePort" selected>节点端口访问</option>
+<!--                <option value="LoadBalancer">负载均衡</option>-->
+            </select>
+        </div>
+    </div>
+
+    <div class="layui-form-item">
+        <label class="layui-form-label">关联容器服务</label>
+        <div class="layui-input-inline" style="width: 250px">
+            <select name="targetDeployment" lay-filter="targetDeployment" id="targetDeployment">
+            </select>
+        </div>
+
+        <div class="layui-form-mid layui-word-aux" id="targetDeploymentAux"></div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">端口映射</label>
+        <div class="layui-input-block">
+            <table id="NodePortTable" lay-filter="NodePortTable"></table>
+        </div>
+    </div>
+
+
+    <div class="layui-form-item">
+        <div class="layui-input-block">
+            <button class="layui-btn" lay-submit="" lay-filter="saveBtn">提交</button>
+        </div>
+    </div>
+
+    <script type="text/html" id="toolbarDemo">
+        <div class="layui-btn-container">
+            <button class="layui-btn layui-btn-normal layui-btn-sm data-add-btn" lay-event="add"> 添加</button>
+        </div>
+    </script>
+
+
+</div>
+<script src="../../lib/layui-v2.6.3/layui.js" charset="utf-8"></script>
+<script src="../lib/js-yaml-4.1.0/js-yaml.js" charset="utf-8"></script>
+<script src="../lib/highlight-11.7.0/highlight.js" charset="utf-8"></script>
+<script src="../lib/highlight-11.7.0/languages/yaml.min.js" charset="utf-8"></script>
+<script src="../lib/highlight-11.7.0/languages/json.min.js" charset="utf-8"></script>
+<script>
+    layui.use(['form', 'table'], function () {
+        var form = layui.form,
+            table = layui.table,
+            layer = layui.layer,
+            $ = layui.$;
+        var deployList = []
+        var nodePorts = [{protocol: 'TCP', nodePort: 0, port: 0}]
+
+        function toYaml() {
+            let json = document.getElementById('config-json')?.innerText;
+            if (json) {
+                try {
+                    let jsonObj = JSON.parse(json);
+                    // console.debug(jsyaml.dump(jsonObj))
+                    const yamlResult = hljs.highlight("yaml", jsyaml.dump(jsonObj)).value;
+                    const jsonResult = hljs.highlight("json", json).value;
+                    console.log(yamlResult, jsonResult)
+                    document.getElementById('config-yaml').innerHTML = yamlResult
+                } catch (e) {
+                    alert(e)
+                }
+            }
+        }
+
+        toYaml()
+        window.toYaml = toYaml
+
+
+        function toJson() {
+            let yaml = document.getElementById('config-yaml')?.innerText;
+            if (yaml) {
+                try {
+                    // 需要把json转成字符串
+                    let json = JSON.stringify(jsyaml.load(yaml), null, 2);
+                    const jsonResult = hljs.highlight("json", json).value;
+                    const yamlResult = hljs.highlight("yaml", yaml).value;
+                    document.getElementById('config-json').innerHTML = jsonResult
+                } catch (e) {
+                    alert(e)
+                }
+            }
+        }
+
+        window.toJson = toJson
+
+        var jsonObject = {
+            "apiVersion": "v1",
+            "kind": "Service",
+            "metadata": {
+                "name": "k8s-mytomcat-svc"
+            },
+            "spec": {
+                "selector": {
+                    "app": "mytomcat"
+                },
+                "type": "NodePort",
+                "ports": [
+                    {
+                        "protocol": "TCP",
+                        "port": 8080,
+                        "targetPort": 8080
+                    }
+                ]
+            }
+        }
+
+        var yamlExample = `
+apiVersion: v1
+kind: Service
+metadata:
+  name: k8s-mytomcat-svc
+spec:
+  selector:
+    app: mytomcat
+  type: NodePort
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+
+`
+
+
+        let nodePortTableResult = table.render({
+            elem: '#NodePortTable',
+            editTrigger: 'dblclick', // 触发编辑的事件类型（默认 click ）。 v2.7.0 新增，之前版本固定为单击触发
+            toolbar: '#toolbarDemo',
+            defaultToolbar: [],
+            cols: [[
+                {
+                    field: 'protocol', title: '协议', width: 150, templet: (row) => {
+                        if (row.protocol === 'TCP') {
+                            return `<button class="layui-btn layui-btn-xs layui-btn-primary  layui-border-blue" onclick="changeProtocol('TCP', ${row.LAY_TABLE_INDEX})">TCP</button>`
+                        } else if (row.protocol === 'UDP'){
+                            return `<button class="layui-btn layui-btn-xs layui-btn-primary  layui-border-blue" onclick="changeProtocol('UDP', ${row.LAY_TABLE_INDEX})">UDP</button>`
+                        }else if (row.protocol === 'SCTP'){
+                            return `<button class="layui-btn layui-btn-xs layui-btn-primary  layui-border-blue" onclick="changeProtocol('SCTP', ${row.LAY_TABLE_INDEX})">SCTP</button>`
+                        }
+
+
+                    }
+                },
+                {field: 'nodePort', title: '节点端口(30000~32767)', width: 210, edit: 'text'},
+                {field: 'port', title: '容器端口', edit: 'text', minWidth: 100},
+                {
+                    field: '操作', title: '操作', templet: row => {
+                        return `<button  class="layui-btn layui-btn-xs layui-btn-primary  layui-border-red" onclick="deleteNodePortTableByIndex( ${row.LAY_TABLE_INDEX})" >删除</button>`
+
+                    }
+                }
+            ]],
+            data: nodePorts
+        })
+
+        table.on('edit(NodePortTable)', function (obj) { //注：edit是固定事件名，test是table原始容器的属性 lay-filter="对应的值"
+            console.log(obj.value); //得到修改后的值
+            console.log(obj.field); //当前编辑的字段名
+            console.log(obj.data); //所在行的所有相关数据
+        });
+
+        table.on('toolbar(NodePortTable)', function (obj) {
+            nodePorts.push({protocol: 'TCP', nodePort: 0, port: 0})
+            nodePortTableResult.reload()
+        })
+
+
+        form.on('select(targetDeployment)', (data) => {
+            console.log(data.value)
+            const targetDeploy = deployList.find(item => item.name === data.value)
+            if (targetDeploy) {
+                $('#targetDeploymentAux').empty()
+                const selectorMatchLabels = targetDeploy.selectorMatchLabels || {}
+                const labelKeys = Object.keys(selectorMatchLabels)
+                labelKeys.forEach(labelItem => {
+                    $('#targetDeploymentAux').append(`<button class="layui-btn layui-btn-xs layui-btn-primary layui-border-blue">${labelItem}:${selectorMatchLabels[labelItem]}</button>`)
+                })
+                form.render()
+                $(".sel_action").parent().css('overflow', 'visible');
+            }
+        })
+
+        //监听提交
+        form.on('submit(saveBtn)', function (data) {
+            var formData = {
+                "apiVersion": "v1",
+                "kind": "Service",
+                "metadata": {
+                    "name": "k8s-mytomcat-svc"
+                },
+                "spec": {
+                    "selector": {
+                        "app": "mytomcat"
+                    },
+                    "type": "NodePort",
+                    "ports": [
+                        {
+                            "protocol": "TCP",
+                            "port": 8080,
+                            "targetPort": 8080
+                        }
+                    ]
+                }
+            }
+            const re = new RegExp('[a-z]([-a-z0-9]*[a-z0-9])?')
+            if (!re.test(data.field.name)) {
+                layer.alert(`${data.field.name}不符合正则[a-z]([-a-z0-9]*[a-z0-9])?`)
+                return false
+            }
+            console.log('data.field', data.field)
+            formData.metadata.name = data.field.name
+            const targetDeploy = deployList.find(targetDeploy => targetDeploy.name === data.field.targetDeployment)
+            if (targetDeploy === undefined) {
+                layer.msg("请选择关联容器服务")
+                return
+            }
+            formData.spec.selector = targetDeploy.selectorMatchLabels
+            formData.spec.type = data.field.type
+            formData.spec.ports = []
+            nodePorts.forEach(nodePortItem => {
+                formData.spec.ports.push({
+                    protocol: nodePortItem.protocol,
+                    nodePort: nodePortItem.nodePort,
+                    port: nodePortItem.port
+                })
+            })
+            console.log('formData', JSON.stringify(formData))
+
+            $.ajax({
+                url: '../service/add' + '?k8sId=' + parent.k8sId,
+                type: 'POST',
+                data: {
+                    json: JSON.stringify(formData)
+                },
+                success: function (result) {
+                    console.log(result)
+                    if (result.code === 10000) {
+                        parent.tableResult.reload()
+                        var iframeIndex = parent.layer.getFrameIndex(window.name);
+                        parent.layer.close(iframeIndex);
+                    } else {
+                        parent.layer.msg(result.msg)
+                    }
+
+                }
+            })
+
+            return false;
+        });
+
+
+        $.ajax({
+            url: '../deploy/list' + '?k8sId=' + parent.k8sId,
+            type: 'GET',
+            success: function (result) {
+                console.log(result)
+                if (result.code === 10000) {
+                    const arr = result.data || []
+                    deployList = arr
+                    $("#targetDeployment").empty()
+                    $("#targetDeployment").append(`<option value="">请选择</option>`)
+                    arr.forEach(item => {
+                        $("#targetDeployment").append(`<option value="${item.name}">${item.name}</option>`)
+
+                    })
+                    form.render()
+                }
+            }
+        })
+
+        function changeProtocol(currentProtocol, index) {
+            let openIndex = layer.open({
+                title: '选择protocol',
+                type: 1,
+                shade: 0.2,
+                maxmin: true,
+                shadeClose: true,
+                area: ['320px', '200px'],
+                content: `
+                <div class="layui-form" lay-filter="chooseProtocolForm">
+                <div class="layui-form-item">
+                        <label class="layui-form-label">protocol</label>
+                        <div class="layui-input-inline">
+                            <select id="chooseProtocol" lay-filter="chooseProtocol">
+                                <option value="TCP" ${currentProtocol == 'TCP' ? 'selected' : ''}>TCP</option>
+                                <option value="UDP" ${currentProtocol == 'UDP' ? 'selected' : ''}>UDP</option>
+                                <option value="SCTP" ${currentProtocol == 'SCTP' ? 'selected' : ''}>SCTP</option>
+                            </select>
+                        </div>
+                 </div>
+                </div>
+                `,
+                success: () => {
+                    form.render()
+
+                    form.on('select(chooseProtocol)', (data) => {
+                        nodePorts.forEach((item, itemIndex) => {
+
+                            if (itemIndex === index) {
+                                item.protocol = data.value
+                                nodePortTableResult.reload()
+                            }
+                        })
+                        layer.close(openIndex)
+                    })
+
+                }
+            });
+        }
+
+        window.changeProtocol = changeProtocol
+
+        function deleteNodePortTableByIndex(index) {
+            if (nodePorts.length === 1) {
+                layer.msg('最后一个不能删除')
+                return
+            } else {
+                nodePorts.splice(index, 1)
+                nodePortTableResult.reload()
+            }
+        }
+
+        window.deleteNodePortTableByIndex = deleteNodePortTableByIndex
+
+
+    });
+</script>
+</body>
+</html>

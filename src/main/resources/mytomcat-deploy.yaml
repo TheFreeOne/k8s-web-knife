@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mytomcat-deployment
+  labels:
+    app: mytomcat
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mytomcat
+  template:
+    metadata:
+      labels:
+        app: mytomcat
+    spec:
+      containers:
+      - name: mytomcat
+        image: mytomcat:0.0.3
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            cpu: 0.01
+            memory: "200Mi"
+          limits:
+            cpu: 1
+            memory: "500Mi"
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        readinessProbe:           # readinessProbe
+          httpGet:                 # 探测方式
+            path: /                # HTTP 路径
+            port: 8080             # 探测端口
+            scheme: HTTP
+          initialDelaySeconds: 5   #pod启动后多少s执行
+          periodSeconds: 5        #执行间隔
+          successThreshold: 1
+          failureThreshold: 10
+          timeoutSeconds: 3
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+            scheme: HTTP
+            httpHeaders:
+            - name: Custom-Header
+              value: Awesome
+          initialDelaySeconds: 60
+          timeoutSeconds: 3
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3

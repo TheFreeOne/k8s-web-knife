@@ -1,0 +1,116 @@
+# 中
+
+
+server:
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+
+spring:
+  profiles:
+    active: h2
+
+  datasource:
+    hikari:
+      max-lifetime: 120000
+      # 设置连接池连接的最长生命周期时间，达到超时时间后连接将强制断开并回收，以防止连接泄漏的可能性。 会抛异常，但仍会正常查询，
+      leak-detection-threshold: 2000
+      pool-name: h2-database
+
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    default-property-inclusion: non_null
+  mvc:
+    format:
+      date-time: yyyy-MM-dd HH:mm:ss
+  gson:
+    date-format: yyyy-MM-dd HH:mm:ss
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+#      naming:
+#        physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
+#        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+#        physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+#    database-platform: mysql
+#    properties:
+#      hibernate:
+#        dialect: org.hibernate.dialect.MySQL8Dialect
+    open-in-view: false
+
+  devtools:
+    restart:
+      enabled: true
+  servlet:
+    multipart:
+      max-file-size: 200MB
+      max-request-size: 200MB
+      # 临时文件的目录
+#      location: D://data/tmp
+  security:
+    user:
+      name: kwk
+      password: kwk
+
+upload:
+  path:
+    windows: D://usr/local/tmp/
+    linux: /usr/local/tmp/
+
+logging:
+  level:
+    org.hibernate.type.descriptor.sql.BasicBinder: trace
+    org.hibernate.sql: trace
+#    io.kubernetes: trace
+#    okhttp3: trace
+# k8s 相关配置
+namespace: default
+
+kubernetes:
+  docker:
+    internal: 192.168.110.130
+
+k8s:
+  api-server-url: https://192.168.110.130:6443
+  secret: "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6ImxLOS1EZGVQRGxyUTJ4QXBXdm96ejQtQkYyMlB4NGpZZkg5N0VJbmNCREUifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlLXN5c3RlbSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJzZWNyZXQtYWRtaW4iLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoiYWRtaW4iLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC51aWQiOiJiMTk5Nzg0MC1jY2JmLTRhYjctODQ4Zi04ZWZhNjFjZTk5ZDkiLCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6a3ViZS1zeXN0ZW06YWRtaW4ifQ.YW7BJHGJwWqDWq-pmu-xAdWwXNXERiGyBlj2nW_H-WFE6l6UbUWWnT251tyNne5geHVyBZS0zXq2gx6U-RvnPSa7dUMHPiTKDeBZceNkpVp5rngyyBqf9y3xoE5IeMcZIgnku0fTPDx65_wH53Lec6uPcoSPCSewd7dIlj1JIMMDYQKnaeOqSpUFCOKb9TQlQbIjHrWxmxW7_suWPPHLHNeEXNNeEOFRwaf4DrglDW0ShDddsi4gffYavl2ryE0tnjPvyZV65MkuEt-7rLdGa3YdV0qlmG32jE1rgeUrpDOT4WfuGKNhDJ-vrNYtvCgqfOnPM6XFeda8jKpz9Y0CZA"
+
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: mysql
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3306/k8s_web_knife?useUnicode=true&characterEncoding=utf-8&useSSL=true&&serverTimezone=Asia/Shanghai&autoReconnect=true
+    username: root
+    password: 123456
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+
+
+
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: h2
+  datasource:
+    url: jdbc:h2:file:${upload.path.linux}kwk
+    username: kwk
+    password: kwkpassword
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+#  h2:
+#    console:
+#      path: /h2-console
+#      enabled: true

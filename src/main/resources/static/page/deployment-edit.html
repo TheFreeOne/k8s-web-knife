@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>layui</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="../../lib/layui-v2.6.3/css/layui.css" media="all">
+    <link rel="stylesheet" href="../../css/public.css" media="all">
+    <style>
+        body {
+            background-color: #ffffff;
+        }
+        html,body {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+<div class="layui-form layuimini-form"  >
+    <div class="layui-form-item  ">
+        <div class="layui-input-block">
+            <button class="layui-btn layui-btn-normal" lay-submit lay-filter="saveBtn">通过json更新</button>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <div style="display: flex;">
+            <button class="layui-btn" style=" flex-grow: 1;" onclick="toYaml()">转yaml -></button>
+            <button class="layui-btn" style=" flex-grow: 1;" onclick="toJson()"><- 转json</button>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <div style="display: flex;height: 100%">
+            <div style="height: 100%;flex-grow: 1;flex: 1;width: 50%;">
+                <pre class="textarea fullHeight fixed-size" id="config-json" contenteditable="true"  onpaste="setTimeout(toYaml, 1)" ></pre>
+            </div>
+            <div style="height: 100%;flex-grow: 1;flex: 1;width: 50%;">
+                <pre class="textarea fullHeight fixed-size" id="config-yaml" contenteditable="true"  onpaste="setTimeout(toJson, 1)"></pre>
+            </div>
+
+
+        </div>
+    </div>
+
+
+
+</div>
+</div>
+<script src="../../lib/layui-v2.6.3/layui.js" charset="utf-8"></script>
+<script src="../lib/js-yaml-4.1.0/js-yaml.js" charset="utf-8"></script>
+<script src="../lib/highlight-11.7.0/highlight.js" charset="utf-8"></script>
+<script src="../lib/highlight-11.7.0/languages/yaml.min.js" charset="utf-8"></script>
+<script src="../lib/highlight-11.7.0/languages/json.min.js" charset="utf-8"></script>
+<script>
+    layui.use(['form'], function () {
+        var form = layui.form,
+            layer = layui.layer,
+            $ = layui.$;
+
+        function toYaml() {
+            let json = document.getElementById('config-json')?.innerText;
+            if (json) {
+                try {
+                    let jsonObj = JSON.parse(json);
+                    // console.debug(jsyaml.dump(jsonObj))
+                    const yamlResult = hljs.highlight("yaml", jsyaml.dump(jsonObj)).value;
+                    const jsonResult = hljs.highlight("json", json).value;
+                    console.log(yamlResult, jsonResult)
+                    document.getElementById('config-yaml').innerHTML = yamlResult
+                } catch (e) {
+                    alert(e)
+                }
+            }
+        }
+        toYaml()
+        window.toYaml = toYaml
+        function toJson() {
+            let yaml = document.getElementById('config-yaml')?.innerText;
+            if (yaml) {
+                try {
+                    // 需要把json转成字符串
+                    let json = JSON.stringify(jsyaml.load(yaml), null, 2);
+                    const jsonResult = hljs.highlight("json", json).value;
+                    const yamlResult = hljs.highlight("yaml", yaml).value;
+                    document.getElementById('config-json').innerHTML = jsonResult
+                } catch (e) {
+                    alert(e)
+                }
+            }
+        }
+
+        window.toJson = toJson
+
+        const namespace = localStorage.getItem("currentNamespace")
+        const name = localStorage.getItem("currentName")
+
+
+
+
+        $.get(`../deploy/getAsJson/${namespace}/${name}`+'?k8sId='+parent.k8sId, {},(res) => {
+
+            const jsonObject = JSON.parse(res.data)
+            const text = JSON.stringify(jsonObject,null,2)
+            const yamlObject = jsyaml.dump(jsonObject)
+
+            document.getElementById('config-yaml').innerHTML = hljs.highlight("yaml", yamlObject).value
+            document.getElementById('config-json').innerHTML = hljs.highlight("json", text).value
+        })
+
+        //监听提交
+        form.on('submit(saveBtn)', function (data) {
+
+
+            let json = document.getElementById('config-json')?.innerText;
+            $.post(`../deploy/updateByJson/${namespace}/${name}`+'?k8sId='+parent.k8sId, {deploymentJson: json},(res) => {
+
+                if (res.code) {
+                    parent.layer.msg('发送成功')
+                    parent.tableResult.reload()
+                }else {
+                    parent.layer.msg(res.msg)
+                }
+
+            })
+
+
+            var iframeIndex = parent.layer.getFrameIndex(window.name);
+            parent.layer.close(iframeIndex);
+
+            return false;
+        });
+
+    });
+</script>
+</body>
+</html>

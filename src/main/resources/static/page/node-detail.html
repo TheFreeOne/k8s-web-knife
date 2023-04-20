@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>layui</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="../lib/layui-v2.6.3/css/layui.css" media="all">
+    <link rel="stylesheet" href="../lib/highlight-11.7.0/styles/default.min.css" media="all">
+    <link rel="stylesheet" href="../css/public.css" media="all">
+    <style>
+
+        pre {
+            overflow: auto
+        }
+
+        .editarea {
+            width: 1px;
+            height: 90vh;
+            flex-grow: 1
+        }
+
+        .allocation-info {
+            display: flex;
+        }
+
+        .allocation-info-cpu {
+            flex: 1;
+        }
+
+        .allocation-info-memory {
+            flex: 1;
+        }
+
+        .allocation-info-pod {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+<div class="layuimini-container">
+    <div class="layuimini-main">
+
+        <div class="allocation-info">
+            <div class="allocation-info-cpu">
+                <p>cpu requests</p>
+                <div id="cpu-requests" style="width: 200px;height: 200px"></div>
+                <p>cpu limits</p>
+                <div id="cpu-limits" style="width: 200px;height: 200px"></div>
+            </div>
+
+            <div class="allocation-info-memory">
+                <p>memory requests</p>
+                <div id="memory-requests" style="width: 200px;height: 200px"></div>
+                <p>memory limits</p>
+                <div id="memory-limits" style="width: 200px;height: 200px"></div>
+            </div>
+            <div class="allocation-info-pod">
+                <p>pod limits</p>
+                <div id="pod-limits" style="width: 200px;height: 200px"></div>
+            </div>
+
+
+        </div>
+        <table class="layui-hide" id="currentTableId" lay-filter="currentTableFilter"></table>
+
+    </div>
+</div>
+<script src="../lib/layui-v2.6.3/layui.js" charset="utf-8"></script>
+<script src="../js/lay-config.js?v=1.0.4" charset="utf-8"></script>
+<script src="../lib/js-yaml-4.1.0/js-yaml.js" charset="utf-8"></script>
+<script src="../lib/highlight-11.7.0/highlight.js" charset="utf-8"></script>
+<script src="../lib/highlight-11.7.0/languages/yaml.min.js" charset="utf-8"></script>
+<script src="../lib/highlight-11.7.0/languages/json.min.js" charset="utf-8"></script>
+<script>
+
+    console.log(window.yaml)
+    window.k8sId = parent.k8sId
+    window.nodeName = parent.nodeName
+
+    layui.use(['form', 'table', 'echarts'], function () {
+
+        var $ = layui.$,
+            form = layui.form,
+            table = layui.table,
+            echarts = layui.echarts;
+
+
+        $.ajax({
+            url: '../node/get',
+            type: 'POST',
+            data: {
+                k8sId: window.k8sId,
+                name: window.nodeName,
+
+            },
+            success: function (result) {
+                if (result.code === 10000) {
+                    const data = result.data
+                    // k8s申请的资源数量，会比总的少一些
+                    const allocatableList = data.allocatableList
+                    const podRequestLimitsInfoList = data.podRequestLimitsInfoList
+
+                    const podCpuRequestList = podRequestLimitsInfoList.map(item => {
+                        const requestList = item.requestList
+                        const podCpuRequest = requestList.find(requestItem => requestItem.name === 'cpu')?.number || 0.00
+                        return podCpuRequest
+                    })
+                    const podCpuRequestSum = podCpuRequestList.reduce((prev, cur) => prev + cur)
+                    const cpuNumber = allocatableList.find(item => item.name === 'cpu')?.number || 0
+                    const memoryNumber = allocatableList.find(item => item.name === 'memory')?.number || 0
+                    const podLimits = allocatableList.find(item => item.name === 'pods')?.number || 0
+                    echartsCpuRequest(cpuNumber.toFixed(2), podCpuRequestSum.toFixed(2))
+
+                    const podCpuLimitList = podRequestLimitsInfoList.map(item => {
+                        const limitList = item.limitList
+                        const podCpuRequest = limitList.find(requestItem => requestItem.name === 'cpu')?.number || 0.00
+                        return podCpuRequest
+                    })
+                    const podCpuLimitsSum = podCpuLimitList.reduce((prev, cur) => prev + cur)
+                    echartsCpuLimits(cpuNumber.toFixed(2), podCpuLimitsSum.toFixed(2))
+
+                    const podMemoryRequestList = podRequestLimitsInfoList.map(item => {
+                        const requestList = item.requestList
+                        const podMemoryRequest = requestList.find(requestItem => requestItem.name === 'memory')?.number || 0.00
+                        return podMemoryRequest
+                    })
+                    const podMemoryRequestsSum = podMemoryRequestList.reduce((prev, cur) => prev + cur)
+
+                    echartsMemoryRequest((memoryNumber/1024/1024).toFixed(2), (podMemoryRequestsSum /1024/1024).toFixed(2))
+
+
+
+
+                    const podMemoryLimitList = podRequestLimitsInfoList.map(item => {
+                        const limitList = item.limitList
+                        const podMemoryRequest = limitList.find(requestItem => requestItem.name === 'memory')?.number || 0.00
+                        return podMemoryRequest
+                    })
+                    const podMemoryLimitsSum = podMemoryLimitList.reduce((prev, cur) => prev + cur)
+
+                    echartsMemoryLimits((memoryNumber/1024/1024).toFixed(2),(podMemoryLimitsSum /1024/1024).toFixed(2))
+
+                    echartsPodLimits(podLimits, podRequestLimitsInfoList.length)
+                    renderPodsTable(podRequestLimitsInfoList)
+                } else {
+                    layer.msg(result.msg)
+                }
+            }
+        })
+
+        async function echartsCpuRequest(totalRequest, usedRequest) {
+            console.log('echartsCpuRequest', totalRequest, usedRequest)
+            const leftRequest = ((parseFloat(totalRequest)).toFixed(2) - parseFloat(usedRequest).toFixed(2)).toFixed(2)
+            const cpuRequest = echarts.init(document.getElementById("cpu-requests"))
+
+            const pieConf = {
+                title: {
+                    text: usedRequest + '/' + totalRequest,
+                    left: 'center',
+                    top: 90,
+                    textStyle: {
+                        color: '#1890fe'
+                    }
+                },
+                visualMap: {
+                    show: false,
+                },
+                series: [
+                    {
+                        name: '访问来源',
+                        type: 'pie',
+                        //环形显示饼状图，实际上显示的是50-80之间的部分
+                        //上限不建议设置为100，echarts自带动画效果，设置为100动画效果很丑
+                        radius: ['50%', '80%'],
+                        center: ['50%', '50%'],
+                        data: [
+                            //itemSyle是单项的背景颜色设置。
+                            {value: leftRequest, itemStyle: {color: '#f1f1f1'}},
+                            {value: usedRequest, itemStyle: {color: '#1890fe'}},
+                        ],
+                        label: {
+                            //将视觉引导图关闭
+                            show: false,
+                        }
+                        ,
+                        // emphasis: {
+                        //     label: {
+                        //         show: true,
+                        //         fontSize: 40,
+                        //         fontWeight: 'bold'
+                        //     }
+                        // },
+                        itemStyle: {
+                            //设置的是每项之间的留白
+                            borderWidth: 7,
+                            borderColor: '#fff'
+                        },
+                        // 初始化echarts的动画效果
+                        animationType: 'scale',
+                        animationEasing: 'elasticOut',
+                        animationDelay: function (idx) {
+                            return Math.random() * 200;
+                        }
+                    }
+                ]
+
+            }
+            cpuRequest.setOption(pieConf)
+        }
+
+        async function echartsCpuLimits(totalRequest, usedRequest) {
+            console.log('echartsCpuLimit', totalRequest, usedRequest)
+            const leftRequest = ((parseFloat(totalRequest)).toFixed(2) - parseFloat(usedRequest).toFixed(2)).toFixed(2)
+            const cpuLimits = echarts.init(document.getElementById("cpu-limits"))
+
+            const pieConf = {
+                title: {
+                    text: usedRequest + '/' + totalRequest,
+                    left: 'center',
+                    top: 90,
+                    textStyle: {
+                        color: '#1890fe'
+                    }
+                },
+                visualMap: {
+                    show: false,
+                },
+                series: [
+                    {
+                        name: '访问来源',
+                        type: 'pie',
+                        //环形显示饼状图，实际上显示的是50-80之间的部分
+                        //上限不建议设置为100，echarts自带动画效果，设置为100动画效果很丑
+                        radius: ['50%', '80%'],
+                        center: ['50%', '50%'],
+                        data: [
+                            //itemSyle是单项的背景颜色设置。
+                            {value: leftRequest, itemStyle: {color: '#f1f1f1'}},
+                            {value: usedRequest, itemStyle: {color: '#1890fe'}},
+                        ],
+                        label: {
+                            //将视觉引导图关闭
+                            show: false,
+                        }, emphasis: {
+                            label: {
+                                show: true,
+                                fontSize: 40,
+                                fontWeight: 'bold'
+                            }
+                        },
+                        itemStyle: {
+                            //设置的是每项之间的留白
+                            borderWidth: 7,
+                            borderColor: '#fff'
+                        },
+                        // 初始化echarts的动画效果
+                        animationType: 'scale',
+                        animationEasing: 'elasticOut',
+                        animationDelay: function (idx) {
+                            return Math.random() * 200;
+                        }
+                    }
+                ]
+
+            }
+            cpuLimits.setOption(pieConf)
+        }
+
+        async function echartsMemoryRequest(totalRequest, usedRequest) {
+            console.log('echartsMemoryRequest', totalRequest, usedRequest)
+            const leftRequest = ((parseFloat(totalRequest)).toFixed(2) - parseFloat(usedRequest).toFixed(2)).toFixed(2)
+            const cpuLimits = echarts.init(document.getElementById("memory-requests"))
+
+            const pieConf = {
+                title: {
+                    text: usedRequest + '/' + totalRequest,
+                    left: 'center',
+                    top: 90,
+                    textStyle: {
+                        color: '#1890fe'
+                    }
+                },
+                visualMap: {
+                    show: false,
+                },
+                series: [
+                    {
+                        name: '访问来源',
+                        type: 'pie',
+                        //环形显示饼状图，实际上显示的是50-80之间的部分
+                        //上限不建议设置为100，echarts自带动画效果，设置为100动画效果很丑
+                        radius: ['50%', '80%'],
+                        center: ['50%', '50%'],
+                        data: [
+                            //itemSyle是单项的背景颜色设置。
+                            {value: leftRequest, itemStyle: {color: '#f1f1f1'}},
+                            {value: usedRequest, itemStyle: {color: '#1890fe'}},
+                        ],
+                        label: {
+                            //将视觉引导图关闭
+                            show: false,
+                        }, emphasis: {
+                            label: {
+                                show: true,
+                                fontSize: 40,
+                                fontWeight: 'bold'
+                            }
+                        },
+                        itemStyle: {
+                            //设置的是每项之间的留白
+                            borderWidth: 7,
+                            borderColor: '#fff'
+                        },
+                        // 初始化echarts的动画效果
+                        animationType: 'scale',
+                        animationEasing: 'elasticOut',
+                        animationDelay: function (idx) {
+                            return Math.random() * 200;
+                        }
+                    }
+                ]
+
+            }
+            cpuLimits.setOption(pieConf)
+        }
+
+        async function echartsMemoryLimits(totalRequest, usedRequest) {
+            console.log('echartsMemoryLimits', totalRequest, usedRequest)
+            const leftRequest = ((parseFloat(totalRequest)).toFixed(2) - parseFloat(usedRequest).toFixed(2)).toFixed(2)
+            const cpuLimits = echarts.init(document.getElementById("memory-limits"))
+
+            const pieConf = {
+                title: {
+                    text: usedRequest + '/' + totalRequest,
+                    left: 'center',
+                    top: 90,
+                    textStyle: {
+                        color: '#1890fe'
+                    }
+                },
+                visualMap: {
+                    show: false,
+                },
+                series: [
+                    {
+                        name: '访问来源',
+                        type: 'pie',
+                        //环形显示饼状图，实际上显示的是50-80之间的部分
+                        //上限不建议设置为100，echarts自带动画效果，设置为100动画效果很丑
+                        radius: ['50%', '80%'],
+                        center: ['50%', '50%'],
+                        data: [
+                            //itemSyle是单项的背景颜色设置。
+                            {value: leftRequest, itemStyle: {color: '#f1f1f1'}},
+                            {value: usedRequest, itemStyle: {color: '#1890fe'}},
+                        ],
+                        label: {
+                            //将视觉引导图关闭
+                            show: false,
+                        }, emphasis: {
+                            label: {
+                                show: true,
+                                fontSize: 40,
+                                fontWeight: 'bold'
+                            }
+                        },
+                        itemStyle: {
+                            //设置的是每项之间的留白
+                            borderWidth: 7,
+                            borderColor: '#fff'
+                        },
+                        // 初始化echarts的动画效果
+                        animationType: 'scale',
+                        animationEasing: 'elasticOut',
+                        animationDelay: function (idx) {
+                            return Math.random() * 200;
+                        }
+                    }
+                ]
+
+            }
+            cpuLimits.setOption(pieConf)
+        }
+
+async function echartsPodLimits(totalRequest, usedRequest) {
+            console.log('echartsMemoryLimits', totalRequest, usedRequest)
+            const leftRequest = ((parseInt(totalRequest)) - parseInt(usedRequest).toFixed(2))
+            const cpuLimits = echarts.init(document.getElementById("pod-limits"))
+
+            const pieConf = {
+                title: {
+                    text: usedRequest + '/' + totalRequest,
+                    left: 'center',
+                    top: 90,
+                    textStyle: {
+                        color: '#1890fe'
+                    }
+                },
+                visualMap: {
+                    show: false,
+                },
+                series: [
+                    {
+                        name: '访问来源',
+                        type: 'pie',
+                        //环形显示饼状图，实际上显示的是50-80之间的部分
+                        //上限不建议设置为100，echarts自带动画效果，设置为100动画效果很丑
+                        radius: ['50%', '80%'],
+                        center: ['50%', '50%'],
+                        data: [
+                            //itemSyle是单项的背景颜色设置。
+                            {value: leftRequest, itemStyle: {color: '#f1f1f1'}},
+                            {value: usedRequest, itemStyle: {color: '#1890fe'}},
+                        ],
+                        label: {
+                            //将视觉引导图关闭
+                            show: false,
+                        }, emphasis: {
+                            label: {
+                                show: true,
+                                fontSize: 40,
+                                fontWeight: 'bold'
+                            }
+                        },
+                        itemStyle: {
+                            //设置的是每项之间的留白
+                            borderWidth: 7,
+                            borderColor: '#fff'
+                        },
+                        // 初始化echarts的动画效果
+                        animationType: 'scale',
+                        animationEasing: 'elasticOut',
+                        animationDelay: function (idx) {
+                            return Math.random() * 200;
+                        }
+                    }
+                ]
+
+            }
+            cpuLimits.setOption(pieConf)
+        }
+
+        function renderPodsTable(data) {
+            table.render({
+                elem: '#currentTableId',
+                cols: [[
+                    {type: 'numbers'},
+                    {field: 'namespace', title: 'Namespace', width: 130},
+                    {field: 'name', title: 'Name', minWidth: 360},
+
+                    {field: 'roles', title: 'CPU Request', width: 120, templet: row=> {
+                        let html = ''
+                            const podCpuRequest = row.requestList.find(requestItem => requestItem.name === 'cpu')?.number || 0.00
+                            html += podCpuRequest * 1000 + 'Mi'
+                            return html
+                        }},
+
+                    {field: 'kubeletVersion', width: 120, title: 'CPU Limits', templet: row=> {
+                            let html = ''
+                            const podCpuLimit = row.limitList.find(limitItem => limitItem.name === 'cpu')?.number || 0.00
+                            html += podCpuLimit * 1000 + 'Mi'
+                            return html
+                        }},
+                    {field: 'osImage', width: 150, title: 'Memory Request', templet: row=> {
+                            let html = ''
+                            const podCpuLimit = row.requestList.find(limitItem => limitItem.name === 'memory')?.number || 0.00
+                            html += podCpuLimit /1024 /1024 + 'Mi'
+                            return html
+                        }},
+                    {field: 'kernelVersion', width: 130, title: 'Memory Limits', templet: row=> {
+                            let html = ''
+                            const podCpuLimit = row.limitList.find(limitItem => limitItem.name === 'memory')?.number || 0.00
+                            html += podCpuLimit /1024 /1024 + 'Mi'
+                            return html
+                        }},
+                    {field: 'createTime', width: 180, title: 'Create'},
+
+
+                ]],
+                height: 400,
+                // page: true,
+                limit: Number.MAX_VALUE,
+                skin: 'line',
+                data: data
+            });
+        }
+    });
+</script>
+
+</body>
+</html>
