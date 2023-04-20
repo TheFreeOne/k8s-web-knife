@@ -25,6 +25,10 @@
 </head>
 <body>
 <div class="layuimini-container">
+    <div>
+        <input type="text" id="command" > <button class="layui-btn layui-btn-xs" id="sendCommand">send</button>
+
+    </div>
     <div class="layuimini-main" id="main">
 
 
@@ -67,6 +71,12 @@
         socket.onclose = function(event) {
             console.log('WebSocket is closed with code ' + event.code);
         };
+
+        $('#sendCommand').on('click', ()=> {
+             const command = document.getElementById("command").value
+            console.log('conmand', command)
+            socket.send(command)
+        })
 
     });
 </script>

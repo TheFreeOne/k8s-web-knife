@@ -7,6 +7,7 @@ import io.kubernetes.client.extended.kubectl.exception.KubectlException;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.models.V1Pod;
+import org.apache.commons.lang3.StringUtils;
 import org.freeone.k8s.web.knife.utils.K8sUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,12 +20,14 @@ import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ConcurrentHashMap;
@@ -65,6 +68,15 @@ public class WebSocketServer {
 
     private Thread readThread;
 
+    private Process proc;
+
+    final PipedOutputStream output = new PipedOutputStream();
+
+    final PipedInputStream input = new PipedInputStream(output);
+
+    public WebSocketServer() throws IOException {
+    }
+
     /**
      * 连接建立成功调用的方法
      */
@@ -88,10 +100,12 @@ public class WebSocketServer {
         ApiClient apiClient = K8sUtils.apiClient(Long.parseLong(k8sId));
 //        String name = "mytomcat-deployment-6695dbdd78-899xj";
 
-//        String[] command = new String[]{"ls","-lh"};
-        String[] command = new String[]{"tail", "-200f", "/usr/local/tomcat/logs/localhost_access_log.2023-04-20.txt"};
-        boolean stdin = false;
-        boolean tty = false;
+        String[] command = new String[]{"ls","-lh"};
+//        String[] command = new String[]{"/bin/bash"};
+//        String[] command = new String[]{"/bin/bash"};
+//        String[] command = new String[]{"tail", "-200f", "/usr/local/tomcat/logs/localhost_access_log.2023-04-20.txt"};
+        boolean stdin = true;
+        boolean tty = true;
         V1Pod pod = Kubectl.get(V1Pod.class).name(name).namespace(namespace).apiClient(apiClient).execute();
         String containerName = pod.getSpec().getContainers().get(0).getName();
 
@@ -101,7 +115,7 @@ public class WebSocketServer {
         PrintStream out = System.out;
         PrintStream err = System.err;
         try {
-            Process proc = exec.exec(pod, command, containerName, stdin, tty);
+            this.proc = exec.exec(pod, command, containerName, stdin, tty);
             // 输出结果 PipedInputStream
             InputStream inputStream = proc.getInputStream();
             if (inputStream instanceof PipedInputStream) {
@@ -156,8 +170,9 @@ public class WebSocketServer {
 //                copyAsync(proc.getErrorStream(), err);
             }
             if (stdin) {
-                copyAsync(System.in, proc.getOutputStream());
+                copyAsync(input, proc.getOutputStream());
             }
+            System.out.println("1231231");
             proc.waitFor();
         } catch (InterruptedException | ApiException | IOException ex) {
             throw new KubectlException(ex);
@@ -191,33 +206,27 @@ public class WebSocketServer {
     /**
      * 收到客户端消息后调用的方法
      *
-     * @param message 客户端发送过来的消息
+     * @param command 客户端发送过来的消息
      */
     @OnMessage
-    public void onMessage(String message, Session session) {
-        log.info("用户消息:" + userId + ",报文:" + message);
+    public void onMessage(String command, Session session) throws IOException {
+        log.info("用户消息:" + userId + ",报文:" + command);
         //可以群发消息
         //消息保存到数据库、redis
-        if ("message".equals(message)) {
-            try {
+        if (StringUtils.isNotBlank(command)) {
+            String[] s = command.split(" ");
+            log.info("recv command = {}", s);
+            if (proc != null) {
 
-
-                //解析发送的报文
-//                JSONObject jsonObject = JSON.parseObject(message);
-                //追加发送人(防止串改)
-//                jsonObject.put("fromUserId",this.userId);
-//                String toUserId=jsonObject.getString("toUserId");
-                //传送给对应toUserId用户的websocket
-//                if(StringUtils.isNotBlank(toUserId)&&webSocketMap.containsKey(toUserId)){
-//                    webSocketMap.get(toUserId).sendMessage(jsonObject.toJSONString());
-//                }else{
-//                    log.error("请求的userId:"+toUserId+"不在该服务器上");
-//                    //否则不在这个服务器上，发送到mysql或者redis
+                output.write(command.getBytes());
+//                try {
+//                    copyAsync(input, proc.getOutputStream());
+//                } catch (Exception e) {
+//                    e.printStackTrace();
 //                }
-            } catch (Exception e) {
-                e.printStackTrace();
             }
         }
+
     }
 
     /**

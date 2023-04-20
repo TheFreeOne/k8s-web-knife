@@ -96,16 +96,17 @@ public class K8sWebKnifeApplicationTests {
         CoreV1Api coreV1Api1 = K8sUtils.coreV1Api(apiClient1);
         String name = "mytomcat-deployment-6695dbdd78-899xj";
         String container = "mytomcat";
-//        String[] command = new String[]{"ls","-lh"};
-        String[] command = new String[]{"tail","-200f","/usr/local/tomcat/logs/catalina.2023-04-20.log"};
+//        String[] command = new String[]{};
+//        String[] command = new String[]{"tail","-200f","/usr/local/tomcat/logs/catalina.2023-04-20.log"};
+        String[] command = new String[]{"/bin/bash"};
         boolean stdin = true;
-        boolean tty = false;
+        boolean tty = true;
 //        KubectlExec
-        Integer execute = Kubectl.exec().namespace(Namespaces.NAMESPACE_DEFAULT)
-                .name(name)
-                .container(container)
-                .stdin(false).tty(false)
-                .command(command).apiClient(apiClient1).execute();
+//        Integer execute = Kubectl.exec().namespace(Namespaces.NAMESPACE_DEFAULT)
+//                .name(name)
+//                .container(container)
+//                .stdin(false).tty(false)
+//                .command(command).apiClient(apiClient1).execute();
 
 //        System.out.println(execute);
 
