@@ -42,7 +42,7 @@
 <script src="../lib/highlight-11.7.0/languages/json.min.js" charset="utf-8"></script>
 <script>
 
-    console.log(window.yaml)
+
     const podNamespace = localStorage.getItem('podNamespace')
     const podName = localStorage.getItem('podName')
     window.k8sId = parent.k8sId
@@ -56,7 +56,11 @@
             element = layui.element,
             table = layui.table;
         var main = document.getElementById('main')
-        var socket = new WebSocket(`ws://192.168.0.104:8080/wsexec/${window.k8sId}/${window.namespace}/${window.podName}`)
+        var wsProtocal = 'ws:'
+        if (location.protocol !== 'http:') {
+            wsProtocal = 'wss:'
+        }
+        var socket = new WebSocket(`${wsProtocal}//${location.host}/wsexec/${window.k8sId}/${window.namespace}/${window.podName}`)
         socket.onopen = function(event) {
             console.log('WebSocket is connected.');
         };
