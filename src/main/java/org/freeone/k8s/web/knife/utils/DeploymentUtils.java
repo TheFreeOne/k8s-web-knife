@@ -23,6 +23,7 @@ import io.kubernetes.client.openapi.models.V1ReplicaSetSpec;
 import io.kubernetes.client.openapi.models.V1ReplicaSetStatus;
 import io.kubernetes.client.openapi.models.V1RollingUpdateDeployment;
 import org.apache.commons.lang3.StringUtils;
+import org.freeone.k8s.web.knife.entity.vo.ContainerVo;
 import org.freeone.k8s.web.knife.entity.vo.DeploymentConditionVo;
 import org.freeone.k8s.web.knife.entity.vo.DeploymentStatusVo;
 import org.freeone.k8s.web.knife.entity.vo.DeploymentStrategyVo;
@@ -41,6 +42,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -354,8 +356,26 @@ public class DeploymentUtils {
                 Date from = Date.from(offsetDateTime.atZoneSameInstant(ZoneId.systemDefault()).toInstant());
                 podVo.setCreateAt(from);
             }
+
+            List<ContainerVo> containerVos = new ArrayList<>();
+            if (pod.getSpec() != null) {
+                List<V1Container> containers = pod.getSpec().getContainers();
+                if (containers != null){
+                    for (V1Container container : containers) {
+                        String name = container.getName();
+                        ContainerVo containerVo = new ContainerVo();
+                        containerVo.setName(name);
+                        containerVos.add(containerVo);
+                    }
+                }
+            }
+
+            podVo.setContainers(containerVos);
             podVo.setNamespace(namespace);
             podVo.setResourceVersion(resourceVersion);
+
+
+
             podVoList.add(podVo);
         }
 

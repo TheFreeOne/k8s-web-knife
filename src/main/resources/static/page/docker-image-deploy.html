@@ -16,10 +16,11 @@
 
 
         <fieldset class="layui-elem-field layui-field-title" style="margin-top: 20px;">
-            <legend>deploy docker image</legend>
+            <legend>deploy docker image </legend>
+
         </fieldset>
 
-        <form class="layui-form" action="" lay-filter="deploy-form">
+        <form class="layui-form  layuimini-form" action="" lay-filter="deploy-form">
             <div class="layui-form-item">
                 <label class="layui-form-label">targetDeployment</label>
 
@@ -32,6 +33,7 @@
                 <label class="layui-form-label">image tag</label>
                 <div class="layui-input-block">
                     <input type="text" name="imageTag" autocomplete="off" placeholder="image tag" class="layui-input">
+                    <tip style="color:red">请确保镜像存在</tip>
                 </div>
             </div>
           <div class="layui-form-item">

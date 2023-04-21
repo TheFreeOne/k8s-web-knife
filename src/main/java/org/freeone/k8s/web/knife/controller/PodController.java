@@ -11,6 +11,7 @@ import io.kubernetes.client.openapi.models.EventsV1Event;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.util.Namespaces;
+import org.apache.commons.lang3.StringUtils;
 import org.freeone.k8s.web.knife.entity.vo.ContainerVo;
 import org.freeone.k8s.web.knife.entity.vo.EventVo;
 import org.freeone.k8s.web.knife.entity.vo.PodVo;
@@ -59,11 +60,13 @@ public class PodController {
 
     @RequestMapping("/logs/{namespace}/{name}")
     @ResponseBody
-    public ResultKit logs(@PathVariable("namespace") String namespace, @PathVariable("name") String name, @RequestParam Long k8sId, HttpServletResponse response) throws Exception {
+    public ResultKit logs(@PathVariable("namespace") String namespace, @PathVariable("name") String name, @RequestParam Long k8sId, String containerName, HttpServletResponse response) throws Exception {
         ApiClient apiClient = K8sUtils.fasterApiClient(k8sId);
         CoreV1Api coreV1Api = K8sUtils.coreV1Api(apiClient);
         V1Pod pod = Kubectl.get(V1Pod.class).name(name).namespace(namespace).apiClient(apiClient).execute();
-        String containerName = pod.getSpec().getContainers().get(0).getName();
+        if (StringUtils.isBlank(containerName)) {
+            containerName = pod.getSpec().getContainers().get(0).getName();
+        }
         String logs = coreV1Api.readNamespacedPodLog(name, namespace, containerName, false, false, null, null, null, null, 100, null);
         return ResultKit.okWithData(logs);
     }
