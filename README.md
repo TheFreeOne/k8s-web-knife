@@ -9,6 +9,7 @@
 - cri-docker 0.3.1
 
 - 默认账号密码 `kwk` `kwk`
+- web终端 https://github.com/ica10888/k8s-terminal
 
 
 > https://docs.docker.com/engine/api/#authentication

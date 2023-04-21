@@ -43,6 +43,22 @@ public class K8sUtils {
         apiClient.setWriteTimeout(200);
         return apiClient;
     }
+    public static final ApiClient longTimeOutApiClient(Long k8sId) {
+
+        K8sApiServerConfig k8sRecord = staticK8sConfigRecordRepository.findById(k8sId).orElse(null);
+        if (k8sRecord == null) {
+            throw new RuntimeException("invalid k8sId");
+        }
+
+        ApiClient apiClient = new ClientBuilder().setBasePath(k8sRecord.getApiServerUrl())
+                .setVerifyingSsl(false)
+                .build();
+        apiClient.addDefaultHeader("Authorization", k8sRecord.getK8sSecret());
+        apiClient.setConnectTimeout(1800000);
+        apiClient.setReadTimeout(1800000);
+        apiClient.setWriteTimeout(1800000);
+        return apiClient;
+    }
 
     public static final ApiClient apiClient(Long k8sId) {
 

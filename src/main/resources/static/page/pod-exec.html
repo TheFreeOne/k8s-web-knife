@@ -20,20 +20,22 @@
             height: 90vh;
             flex-grow: 1
         }
-
+html,body,.layuimini-container,#my-iframe{
+    width: 100%;
+    height: 90%;
+}
     </style>
 </head>
 <body>
 <div class="layuimini-container">
-    <div>
-        <input type="text" id="command" value="pwd"> <button class="layui-btn layui-btn-xs" id="sendCommand">send</button>
+<!--    <div>-->
+<!--        <input type="text" id="command" value="pwd"> <button class="layui-btn layui-btn-xs" id="sendCommand">send</button>-->
+<!--    </div>-->
+<!--    <div class="layuimini-main" id="main">-->
 
-    </div>
-    <div class="layuimini-main" id="main">
+<iframe url="" id="my-iframe"></iframe>
 
-
-
-    </div>
+<!--    </div>-->
 </div>
 <script src="../lib/layui-v2.6.3/layui.js" charset="utf-8"></script>
 <script src="../lib/js-yaml-4.1.0/js-yaml.js" charset="utf-8"></script>
@@ -48,41 +50,44 @@
     window.k8sId = parent.k8sId
     window.namespace = parent.namespace
     window.podName = parent.podName
-
-    layui.use(['form', 'table','element'], function () {
-
-        var $ = layui.jquery,
-            form = layui.form,
-            element = layui.element,
-            table = layui.table;
-        var main = document.getElementById('main')
-        var wsProtocal = 'ws:'
-        if (location.protocol !== 'http:') {
-            wsProtocal = 'wss:'
-        }
-        var socket = new WebSocket(`${wsProtocal}//${location.host}/wsexec/${window.k8sId}/${window.namespace}/${window.podName}`)
-        socket.onopen = function(event) {
-            console.log('WebSocket is connected.');
-        };
-        socket.onmessage = function(event) {
-            console.log('Received message: ' + event.data);
-            main.innerText += event.data + '\r\n'
-            main.scrollIntoView(false)
-        };
-        socket.onerror = function(event) {
-            console.error('WebSocket error observed:', event);
-        };
-        socket.onclose = function(event) {
-            console.log('WebSocket is closed with code ' + event.code);
-        };
-
-        $('#sendCommand').on('click', ()=> {
-             const command = document.getElementById("command").value
-            console.log('conmand', command)
-            socket.send(command)
-        })
-
-    });
+    var url = 'http://192.168.0.142:8080/'
+    const myiframe = document.getElementById('my-iframe')
+    myiframe.setAttribute('src', `../../ica10888/main.html?namespace=${window.namespace}&name=${window.podName}&container=&k8sId=${window.k8sId}`)
+    //
+    // layui.use(['form', 'table','element'], function () {
+    //
+    //     var $ = layui.jquery,
+    //         form = layui.form,
+    //         element = layui.element,
+    //         table = layui.table;
+    //     var main = document.getElementById('main')
+    //     var wsProtocal = 'ws:'
+    //     if (location.protocol !== 'http:') {
+    //         wsProtocal = 'wss:'
+    //     }
+    //     var socket = new WebSocket(`${wsProtocal}//${location.host}/wsexec/${window.k8sId}/${window.namespace}/${window.podName}`)
+    //     socket.onopen = function(event) {
+    //         console.log('WebSocket is connected.');
+    //     };
+    //     socket.onmessage = function(event) {
+    //         console.log('Received message: ' + event.data);
+    //         main.innerText += event.data + '\r\n'
+    //         main.scrollIntoView(false)
+    //     };
+    //     socket.onerror = function(event) {
+    //         console.error('WebSocket error observed:', event);
+    //     };
+    //     socket.onclose = function(event) {
+    //         console.log('WebSocket is closed with code ' + event.code);
+    //     };
+    //
+    //     $('#sendCommand').on('click', ()=> {
+    //          const command = document.getElementById("command").value
+    //         console.log('conmand', command)
+    //         socket.send(command)
+    //     })
+    //
+    // });
 </script>
 
 </body>
