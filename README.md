@@ -15,7 +15,7 @@
 
 > https://docs.docker.com/engine/api/#authentication
 
-
+![输入图片说明](doc/Snipaste_2023-04-21_10-26-48.png)
 
 ```shell
 kubectl api-versions
