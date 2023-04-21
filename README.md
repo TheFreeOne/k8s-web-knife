@@ -2,6 +2,8 @@
 
 模仿一些云服务商管理k8s的界面,可用于`k8s` + `docker`开发环境下部署测试项目
 
+需要添加 k8s 和docker api的相关配置才可使用
+
 测试环境
 
 - k8s  1.25.5
@@ -11,8 +13,9 @@
 - 默认账号密码 `kwk` `kwk`
 - web终端 https://github.com/ica10888/k8s-terminal
 
-
 > https://docs.docker.com/engine/api/#authentication
+
+
 
 ```shell
 kubectl api-versions
