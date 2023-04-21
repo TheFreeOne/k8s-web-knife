@@ -186,7 +186,7 @@
 
             if (obj.event === 'delete') {
 
-                layer.confirm('确定删除?', {icon: 3, title:'提示'}, function(index){
+                layer.confirm('确定删除?可能会影响二次发布', {icon: 3, title:'提示'}, function(index){
                     $.ajax({
                         url: '../docker/image/deleteDockerImage',
                         type: 'POST',

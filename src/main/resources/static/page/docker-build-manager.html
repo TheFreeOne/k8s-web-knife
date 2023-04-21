@@ -145,7 +145,7 @@
         table.on('tool(currentTableFilter)', function (obj) {
             console.debug(obj)
             if (obj.event==='delete') {
-                layer.confirm('确定删除?', {icon: 3, title:'提示'}, function(index){
+                layer.confirm('确定删除? 不会删除相关镜像', {icon: 3, title:'提示'}, function(index){
                     //do something
                     $.ajax({
                         url: '../docker/image/build/history/delete',
