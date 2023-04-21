@@ -53,12 +53,14 @@ function httpGet(url, successCallback, errorCallback)
 var name = Query.name;
 var namespace = Query.namespace;
 var container = Query.container;
+var k8sId = Query.k8sId
+
 var socket = null;
 
 /**
  *
  */
-createTerminal(name, namespace, container, '/bin/bash');
+createTerminal(name, namespace, container, '/bin/bash', k8sId);
 
 /**
  *
@@ -67,7 +69,7 @@ createTerminal(name, namespace, container, '/bin/bash');
  * @param container
  * @param command
  */
-function createTerminal(name, namespace, container =  '', command) {
+function createTerminal(name, namespace, container =  '', command, k8sId =0) {
   while (terminalContainer.children.length) {
     terminalContainer.removeChild(terminalContainer.children[0]);
   }
@@ -85,7 +87,9 @@ function createTerminal(name, namespace, container =  '', command) {
   var protocol = (location.protocol === 'https:') ? 'wss://' : 'ws://';
   var socketURL = protocol + location.hostname + ((location.port) ? (':' + location.port) : '') + '/container/terminal/shell/ws';
   socketURL += '?name=' + name + '&namespace=' + namespace + '&container='+ container + '&cols=' + term.cols + '&rows=' + term.rows;
-  if (parent && parent.k8sId) {
+  if (k8sId !== 0) {
+      socketURL += '&k8sId=' + k8sId
+  } else  if (parent && parent.k8sId) {
       socketURL += '&k8sId='+parent.k8sId
   }
   socket = new ReconnectingWebSocket(socketURL);

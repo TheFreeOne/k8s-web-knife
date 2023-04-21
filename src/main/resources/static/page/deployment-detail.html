@@ -667,7 +667,7 @@
         function podExec(podNamespace, podName) {
             window.namespace = podNamespace;
             window.podName = podName
-
+            window.open(`../../ica10888/main.html?namespace=${window.namespace}&name=${window.podName}&container=&k8sId=${window.k8sId}`)
             layer.open({
                 title: 'exec 测试',
                 type: 2,
