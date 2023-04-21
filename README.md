@@ -17,6 +17,8 @@
 
 ![输入图片说明](doc/Snipaste_2023-04-21_10-26-48.png)
 
+![输入图片说明](doc/Snipaste_2023-04-21_10-31-32.png)
+
 ```shell
 kubectl api-versions
 
