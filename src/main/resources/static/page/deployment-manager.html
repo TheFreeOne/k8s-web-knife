@@ -57,6 +57,7 @@
         <script type="text/html" id="toolbarDemo">
             <div class="layui-btn-container">
                 <button class="layui-btn layui-btn-normal layui-btn-sm data-add-btn" lay-event="add"> 通过JSON添加</button>
+                <button class="layui-btn layui-btn-normal layui-btn-sm data-add-btn" lay-event="addByForm"> 通过表单添加</button>
 <!--                <button class="layui-btn layui-btn-sm layui-btn-danger data-delete-btn" lay-event="delete"> 删除 </button>-->
             </div>
         </script>
@@ -207,7 +208,21 @@
                 $(window).on("resize", function () {
                     layer.full(index);
                 });
-            } else if (obj.event === 'delete') {  // 监听删除操作
+            } else if (obj.event === 'addByForm') {  // 监听添加操作
+                window.k8sId=$('#k8sId').val()
+                var index = layer.open({
+                    title: '通过表单添加Deployment',
+                    type: 2,
+                    shade: 0.2,
+                    maxmin: true,
+                    shadeClose: true,
+                    area: ['800px', '700px'],
+                    content: '../page/deployment-add-form.html',
+                });
+                $(window).on("resize", function () {
+                    layer.full(index);
+                });
+            }  else if (obj.event === 'delete') {  // 监听删除操作
                 var checkStatus = table.checkStatus('currentTableId')
                     , data = checkStatus.data;
                 layer.alert(JSON.stringify(data));

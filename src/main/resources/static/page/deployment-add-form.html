@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>layui</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="../../lib/layui-v2.6.3/css/layui.css" media="all">
+    <link rel="stylesheet" href="../../css/public.css" media="all">
+    <style>
+        body {
+            background-color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+<div class="layui-form layuimini-form">
+
+    <div class="layui-form-item">
+        <label class="layui-form-label">deployment name</label>
+        <div class="layui-input-block">
+            <input type="text" name="deploymentName" lay-verify="required" autocomplete="off" placeholder="deployment name" class="layui-input">
+            <tip>确保唯一, selector match label 将以 app:  ${deployment name} 为值</tip>
+        </div>
+    </div>
+
+    <div class="layui-form-item">
+        <label class="layui-form-label">镜像</label>
+        <div class="layui-input-block">
+            <input type="text" name="imageName" lay-verify="required" autocomplete="off" placeholder="image name" class="layui-input">
+            <tip>例如 tomcat:9.0.70-jdk8</tip>
+        </div>
+    </div>
+
+    <div class="layui-form-item">
+        <label class="layui-form-label">镜像拉取策略</label>
+        <div class="layui-input-block"  >
+            <select name="imagePullPolicy" id="imagePullPolicy">
+                <option value="Always">(Always)总是从镜像仓库获取镜像</option>
+                <option value="Never">(Never)使用本地镜像</option>
+                <option value="IfNotPresent" selected>(IfNotPresent)仅当本地没有镜像时，才从镜像仓库获取镜像</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="layui-form-item">
+        <label class="layui-form-label">replicas</label>
+        <div class="layui-input-block">
+            <input type="number" max="10" min="0" name="replicas" lay-verify="required" autocomplete="off" placeholder="replicas" class="layui-input" value="1">
+
+        </div>
+    </div>
+
+    <div class="layui-form-item  ">
+        <div class="layui-input-block">
+            <button class="layui-btn layui-btn-normal" lay-submit lay-filter="saveBtn">添加</button>
+        </div>
+    </div>
+
+</div>
+<script src="../../lib/layui-v2.6.3/layui.js" charset="utf-8"></script>
+<script src="../lib/js-yaml-4.1.0/js-yaml.js" charset="utf-8"></script>
+<script src="../lib/highlight-11.7.0/highlight.js" charset="utf-8"></script>
+<script src="../lib/highlight-11.7.0/languages/yaml.min.js" charset="utf-8"></script>
+<script src="../lib/highlight-11.7.0/languages/json.min.js" charset="utf-8"></script>
+<script>
+    layui.use(['form'], function () {
+        var form = layui.form,
+            layer = layui.layer,
+            $ = layui.$;
+
+
+var yamlExample=`
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mytomcat-deployment
+  labels:
+    app: mytomcat
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mytomcat
+  template:
+    metadata:
+      labels:
+        app: mytomcat
+    spec:
+      containers:
+      - name: mytomcat
+        image: tomcat:9.0.70-jdk8
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+`
+var jsonExample = {
+    "apiVersion": "apps/v1",
+    "kind": "Deployment",
+    "metadata": {
+        "name": "mytomcat-deployment",
+        "labels": {
+            "app": "mytomcat"
+        }
+    },
+    "spec": {
+        "replicas": 1,
+        "selector": {
+            "matchLabels": {
+                "app": "mytomcat"
+            }
+        },
+        "template": {
+            "metadata": {
+                "labels": {
+                    "app": "mytomcat"
+                }
+            },
+            "spec": {
+                "containers": [
+                    {
+                        "name": "mytomcat",
+                        "image": "tomcat:9.0.70-jdk8",
+                        "imagePullPolicy": "Never",
+                        "ports": [
+                            {
+                                "containerPort": 8080,
+                                "protocol": "TCP"
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    }
+}
+
+
+        //监听提交
+        form.on('submit(saveBtn)', function (data) {
+            console.log(data)
+
+            jsonExample.metadata.name = data.field.deploymentName
+            jsonExample.metadata.labels.app = data.field.deploymentName
+            jsonExample.spec.selector.matchLabels.app = data.field.deploymentName
+            jsonExample.spec.template.metadata.labels.app = data.field.deploymentName
+            jsonExample.spec.template.spec.containers[0].name = data.field.deploymentName
+            jsonExample.spec.template.spec.containers[0].image = data.field.imageName
+            jsonExample.spec.template.spec.containers[0].imagePullPolicy = data.field.imagePullPolicy
+            jsonExample.spec.replicas = parseInt(data.field.replicas)
+            console.log(jsonExample)
+            // let json = document.getElementById('config-json')?.innerText;
+            let jsonObject = jsonExample
+            let json = JSON.stringify(jsonExample)
+            $.post(`../deploy/addByJson/default/${jsonObject.metadata.name}`+'?k8sId='+parent.k8sId, {deploymentJson: json},(res) => {
+
+                if (res.code===10000) {
+                    parent.layer.msg('发送成功')
+                }else {
+                    parent.layer.msg(res.msg)
+                }
+
+                var iframeIndex = parent.layer.getFrameIndex(window.name);
+                parent.layer.close(iframeIndex);
+                return false;
+            })
+
+
+
+
+            return false;
+        });
+
+
+    });
+</script>
+</body>
+</html>
