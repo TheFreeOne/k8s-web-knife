@@ -127,6 +127,11 @@
                 });
             } else if (obj.event === 'saveEnv') {
 
+                const names = env.map(item=>item.name)
+                if (names.length !==new Set(names).size) {
+                    layer.msg('不可存在重复的name')
+                    return
+                }
                 $.ajax({
                     type: "POST",
                     url: `../deploy/updateEnv/${window.deploy.namespace}/${window.deploy.name}`+'?k8sId='+parent.k8sId,
@@ -145,7 +150,7 @@
                             })
 
                         }else {
-                            parent.layer.msg(res.msg)
+                            parent.layer.msg(result.msg)
                         }
 
                     }

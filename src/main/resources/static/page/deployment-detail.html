@@ -31,10 +31,10 @@
         <div class="layui-tab" lay-filter="infoTabs">
             <ul class="layui-tab-title">
                 <li class="layui-this" lay-id="detail">详情信息</li>
-<!--                <li lay-id="containersConfig">容器配置</li>-->
-<!--                <li lay-id="lookEvents">日志</li>-->
-<!--                <li>商品管理</li>-->
-<!--                <li>订单管理</li>-->
+                <!--                <li lay-id="containersConfig">容器配置</li>-->
+                <!--                <li lay-id="lookEvents">日志</li>-->
+                <!--                <li>商品管理</li>-->
+                <!--                <li>订单管理</li>-->
             </ul>
             <div class="layui-tab-content">
                 <div class="layui-tab-item layui-show">
@@ -158,8 +158,10 @@
                                 <div class="layui-input-inline" style="width: 360px;">
                                     <select name="imagePullPolicy" id="imagePullPolicy">
                                         <option value="Always">(Always)总是从镜像仓库获取镜像</option>
-                                        <option value="Never"    >(Never)使用本地镜像</option>
-                                        <option value="IfNotPresent"    >(IfNotPresent)仅当本地没有镜像时，才从镜像仓库获取镜像</option>
+                                        <option value="Never">(Never)使用本地镜像</option>
+                                        <option value="IfNotPresent">
+                                            (IfNotPresent)仅当本地没有镜像时，才从镜像仓库获取镜像
+                                        </option>
                                     </select>
                                 </div>
                             </div>
@@ -168,7 +170,12 @@
                             <div class="layui-inline" style=" min-width: 466px; ">
                                 <label class="layui-form-label">其他</label>
                                 <div class="layui-input-inline" style="width: 360px;">
-                                <button class="layui-btn layui-btn-normal layui-btn-sm" onclick="editContainerEnv()">管理环境变量</button>
+                                    <button class="layui-btn layui-btn-normal layui-btn-sm"
+                                            onclick="editContainerEnv()">管理环境变量
+                                    </button>
+<!--                                    <button class="layui-btn layui-btn-normal layui-btn-sm"-->
+<!--                                            onclick="editLivenessProbeAndreadinessProbe()">存活和就绪检测-->
+<!--                                    </button>-->
                                 </div>
                             </div>
                         </div>
@@ -193,13 +200,13 @@
 
 
                 </div>
-<!--                <div class="layui-tab-item">-->
-<!--                    // 容器模板-->
+                <!--                <div class="layui-tab-item">-->
+                <!--                    // 容器模板-->
 
-<!--                </div>-->
-<!--                <div class="layui-tab-item">内容3</div>-->
-<!--                <div class="layui-tab-item">内容4</div>-->
-<!--                <div class="layui-tab-item">内容5</div>-->
+                <!--                </div>-->
+                <!--                <div class="layui-tab-item">内容3</div>-->
+                <!--                <div class="layui-tab-item">内容4</div>-->
+                <!--                <div class="layui-tab-item">内容5</div>-->
             </div>
         </div>
 
@@ -234,7 +241,7 @@
 <script>
 
     console.log(window.yaml)
-    window.k8sId= parent.k8sId
+    window.k8sId = parent.k8sId
 
     layui.use(['form', 'table'], function () {
 
@@ -315,7 +322,7 @@
                             return html
                         }
                     }
-                    , {field: 'phase', title: '状态', width: 150,align: 'center'}
+                    , {field: 'phase', title: '状态', width: 150, align: 'center'}
                     , {field: 'ready', title: '是否准备', width: 150}
                     , {field: 'hostIP', title: '节点IP', width: 150, align: 'center'}
                     , {field: 'podIP', title: '实例IP', width: 150, align: 'center'}
@@ -324,7 +331,7 @@
                     , {
                         title: '操作', width: 170, templet: function (data) {
                             return `<button class="layui-btn layui-btn-xs" onclick="podDetail('${data.namespace}','${data.name}')">详情</button>
-                                    <button class="layui-btn layui-btn-xs" onclick="podLogs('${data.namespace}','${data.name}', '${((data.containers && data.containers != null && data.containers.length > 0)?data.containers[0].name : '' )}')">logs</button>
+                                    <button class="layui-btn layui-btn-xs" onclick="podLogs('${data.namespace}','${data.name}', '${((data.containers && data.containers != null && data.containers.length > 0) ? data.containers[0].name : '')}')">logs</button>
                                     <button class="layui-btn layui-btn-xs" onclick="podExec('${data.namespace}','${data.name}')">exec</button>
 `
                         }
@@ -433,7 +440,7 @@
                     elem: '#replicaSetListTable'
                     , cols: [[ //标题栏
                         {field: 'name', title: '名称', width: 249}
-                        , {field: 'image', title: '镜像', width: 170}
+                        , {field: 'image', title: '镜像', width: 285}
                         , {
                             field: 'labels', title: '标签', minWidth: 220, templet: function (data) {
                                 let text = ''
@@ -639,9 +646,9 @@
 </div>`,
                 success: function (layero, index) {
 
-                    interval1 = setInterval(()=> {
+                    interval1 = setInterval(() => {
                         $.ajax({
-                            url: `../pod/logs/${podNamespace}/${podName}?k8sId=` + window.k8sId + '&containerName='+(containerName||''),
+                            url: `../pod/logs/${podNamespace}/${podName}?k8sId=` + window.k8sId + '&containerName=' + (containerName || ''),
                             type: 'GET',
                             // data: data.field,
                             success: function (result) {
@@ -737,7 +744,21 @@
                 content: '../page/container-env-edit.html',
             });
         }
+
         window.editContainerEnv = editContainerEnv
+
+        function editLivenessProbeAndreadinessProbe() {
+            layer.open({
+                title: '容器嗅探检测',
+                type: 2,
+                shade: 0.2,
+                maxmin: true,
+                shadeClose: true,
+                area: ['1320px', '700px'],
+                content: '../page/container-probe-edit.html',
+            });
+        }
+        window.editLivenessProbeAndreadinessProbe = editLivenessProbeAndreadinessProbe
     });
 </script>
 

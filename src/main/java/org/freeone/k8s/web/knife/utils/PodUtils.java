@@ -266,6 +266,7 @@ public class PodUtils extends DeploymentUtils {
                 Long terminationGracePeriodSeconds = readinessProbe.getTerminationGracePeriodSeconds();
                 V1HTTPGetAction httpGet = readinessProbe.getHttpGet();
 
+
                 HTTPGetActionVo httpGetActionVo = new HTTPGetActionVo();
                 if (httpGet != null) {
                     String host = httpGet.getHost();

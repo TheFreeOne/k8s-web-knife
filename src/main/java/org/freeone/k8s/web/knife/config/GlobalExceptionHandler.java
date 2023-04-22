@@ -92,6 +92,12 @@ public class GlobalExceptionHandler {
     public ResultKit handleServletRequestBindingException(ServletRequestBindingException exception) {
         return ResultKit.failed(exception.getMessage());
     }
+    @ExceptionHandler(value = io.kubernetes.client.openapi.ApiException.class)
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    public ResultKit handleServletRequestBindingException(io.kubernetes.client.openapi.ApiException exception) {
+        return ResultKit.failed(exception.getMessage());
+    }
 
 
     @ExceptionHandler(value = Exception.class)
