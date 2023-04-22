@@ -163,6 +163,14 @@
                                     </select>
                                 </div>
                             </div>
+
+
+                            <div class="layui-inline" style=" min-width: 466px; ">
+                                <label class="layui-form-label">其他</label>
+                                <div class="layui-input-inline" style="width: 360px;">
+                                <button class="layui-btn layui-btn-normal layui-btn-sm" onclick="editContainerEnv()">管理环境变量</button>
+                                </div>
+                            </div>
                         </div>
 
                     </div>
@@ -718,7 +726,18 @@
 
         window.editUpdateStrategy = editUpdateStrategy
 
-
+        function editContainerEnv() {
+            layer.open({
+                title: '更新env',
+                type: 2,
+                shade: 0.2,
+                maxmin: true,
+                shadeClose: true,
+                area: ['1020px', '700px'],
+                content: '../page/container-env-edit.html',
+            });
+        }
+        window.editContainerEnv = editContainerEnv
     });
 </script>
 

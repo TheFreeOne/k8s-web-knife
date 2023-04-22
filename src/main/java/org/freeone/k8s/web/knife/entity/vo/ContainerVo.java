@@ -4,6 +4,8 @@ import java.util.List;
 
 public class ContainerVo {
 
+
+
     private String name;
 
     private String image;
@@ -21,6 +23,18 @@ public class ContainerVo {
     private Integer restartCount;
 
     private Boolean started;
+
+    private List<EnvVarVo> env;
+
+
+
+    public List<EnvVarVo> getEnv() {
+        return this.env;
+    }
+
+    public void setEnv(List<EnvVarVo> env) {
+        this.env = env;
+    }
 
     public Boolean getReady() {
         return this.ready;

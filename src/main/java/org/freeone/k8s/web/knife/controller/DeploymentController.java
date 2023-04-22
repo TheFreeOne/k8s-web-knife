@@ -11,6 +11,7 @@ import io.kubernetes.client.openapi.models.V1Container;
 import io.kubernetes.client.openapi.models.V1Deployment;
 import io.kubernetes.client.openapi.models.V1DeploymentSpec;
 import io.kubernetes.client.openapi.models.V1DeploymentStrategy;
+import io.kubernetes.client.openapi.models.V1EnvVar;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1ReplicaSet;
@@ -21,6 +22,7 @@ import org.freeone.k8s.web.knife.entity.vo.ContainerVo;
 import org.freeone.k8s.web.knife.entity.vo.DeploymentStatusVo;
 import org.freeone.k8s.web.knife.entity.vo.DeploymentStrategyVo;
 import org.freeone.k8s.web.knife.entity.vo.DeploymentVo;
+import org.freeone.k8s.web.knife.entity.vo.EnvVarVo;
 import org.freeone.k8s.web.knife.entity.vo.PodVo;
 import org.freeone.k8s.web.knife.entity.vo.ReplicaSetVo;
 import org.freeone.k8s.web.knife.entity.vo.RolloutHistoryVo;
@@ -33,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -263,7 +266,7 @@ public class DeploymentController {
 
         ApiClient apiClient = K8sUtils.apiClient(k8sId);
         V1Deployment v1Deployment = apiClient.getJSON().deserialize(deploymentJson, V1Deployment.class);
-        System.out.println(v1Deployment);
+
         PatchUtils.patch(
                 V1Deployment.class,
                 () ->
@@ -280,27 +283,39 @@ public class DeploymentController {
                 V1Patch.PATCH_FORMAT_STRATEGIC_MERGE_PATCH,
                 K8sUtils.apiClient(k8sId));
 
-
-        // Wait until deployment has stabilized after rollout restart
-//            Wait.poll(
-//                    Duration.ofSeconds(3),
-//                    Duration.ofSeconds(60),
-//                    () -> {
-//                        try {
-//                            System.out.println("Waiting until example deployment restarted successfully...");
-//                            return appsV1Api
-//                                    .readNamespacedDeployment(deploymentName, namespace, null)
-//                                    .getStatus()
-//                                    .getReadyReplicas()
-//                                    > 0;
-//                        } catch (ApiException e) {
-//                            e.printStackTrace();
-//                            return false;
-//                        }
-//                    });
-//            System.out.println("Example deployment restarted successfully!");
         return ResultKit.ok();
+    }
+    @RequestMapping("/updateEnv/{namespace}/{name}")
+    public ResultKit updateEnv(@PathVariable("namespace") String namespace, @PathVariable("name") String deploymentName, @RequestBody EnvVarVo[] env, @RequestParam Long k8sId) throws Exception {
 
+        ApiClient apiClient = K8sUtils.apiClient(k8sId);
+        V1Deployment runningDeployment = Kubectl.get(V1Deployment.class).namespace(namespace).name(deploymentName).apiClient(apiClient).execute();
+        V1Container v1Container = runningDeployment.getSpec().getTemplate().getSpec().getContainers().get(0);
+        List<V1EnvVar> envVarList = new ArrayList<>();
+        for (EnvVarVo envVarVo : env) {
+            V1EnvVar v1EnvVar = new V1EnvVar();
+            v1EnvVar.setName(envVarVo.getName());
+            v1EnvVar.setValue(envVarVo.getValue());
+            envVarList.add(v1EnvVar);
+        }
+        v1Container.setEnv(envVarList);
+        String serialize = apiClient.getJSON().serialize(runningDeployment);
+        PatchUtils.patch(
+                V1Deployment.class,
+                () ->
+                        K8sUtils.appsV1Api(apiClient).patchNamespacedDeploymentCall(
+                                deploymentName,
+                                namespace,
+                                new V1Patch(serialize),
+                                null,
+                                null,
+                                "kubectl-rollout",
+                                null,
+                                null,
+                                null),
+                V1Patch.PATCH_FORMAT_STRATEGIC_MERGE_PATCH,
+                apiClient);
+        return ResultKit.ok();
     }
 
     @RequestMapping("/addByJson/{namespace}/{name}")

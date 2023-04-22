@@ -9,6 +9,8 @@ import io.kubernetes.client.openapi.models.V1ContainerState;
 import io.kubernetes.client.openapi.models.V1ContainerStateRunning;
 import io.kubernetes.client.openapi.models.V1ContainerStateTerminated;
 import io.kubernetes.client.openapi.models.V1ContainerStatus;
+import io.kubernetes.client.openapi.models.V1EnvFromSource;
+import io.kubernetes.client.openapi.models.V1EnvVar;
 import io.kubernetes.client.openapi.models.V1HTTPGetAction;
 import io.kubernetes.client.openapi.models.V1HTTPHeader;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
@@ -21,6 +23,7 @@ import io.kubernetes.client.openapi.models.V1Probe;
 import io.kubernetes.client.openapi.models.V1ResourceRequirements;
 import io.kubernetes.client.openapi.models.V1VolumeMount;
 import org.freeone.k8s.web.knife.entity.vo.ContainerVo;
+import org.freeone.k8s.web.knife.entity.vo.EnvVarVo;
 import org.freeone.k8s.web.knife.entity.vo.EventVo;
 import org.freeone.k8s.web.knife.entity.vo.HTTPGetActionVo;
 import org.freeone.k8s.web.knife.entity.vo.PodConditionVo;
@@ -513,6 +516,21 @@ public class PodUtils extends DeploymentUtils {
             probeVo.setHttpGet(httpGetActionVo);
             containerVo.setLivenessProbe(probeVo);
         }
+
+        List<V1EnvVar> env = container.getEnv();
+        List<EnvVarVo> envList = new ArrayList<>();
+        if(env !=null) {
+            for (V1EnvVar v1EnvVar : env) {
+                String name = v1EnvVar.getName();
+                String value = v1EnvVar.getValue();
+
+                EnvVarVo envVarVo = new EnvVarVo();
+                envVarVo.setName(name);
+                envVarVo.setValue(value);
+                envList.add(envVarVo);
+            }
+        }
+
         List<V1VolumeMount> volumeMounts = container.getVolumeMounts();
         List<VolumeMountVo> volumeMountVos = new ArrayList<>();
         if (volumeMounts != null) {
@@ -529,8 +547,8 @@ public class PodUtils extends DeploymentUtils {
                 volumeMountVos.add(volumeMountVo);
             }
         }
-
-
+        containerVo.setEnv(envList);
+//        containerVo.setUid(contain);
         containerVo.setImage(image);
         containerVo.setVolumeMountVos(volumeMountVos);
         return containerVo;

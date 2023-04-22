@@ -62,6 +62,7 @@
             let json = document.getElementById('config-json')?.innerText;
             if (json) {
                 try {
+                    console.debug('json', json)
                     let jsonObj = JSON.parse(json);
                     // console.debug(jsyaml.dump(jsonObj))
                     const yamlResult = hljs.highlight("yaml", jsyaml.dump(jsonObj)).value;

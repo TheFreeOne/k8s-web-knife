@@ -67,7 +67,7 @@ public class PodController {
         if (StringUtils.isBlank(containerName)) {
             containerName = pod.getSpec().getContainers().get(0).getName();
         }
-        String logs = coreV1Api.readNamespacedPodLog(name, namespace, containerName, false, false, null, null, null, null, 100, null);
+        String logs = coreV1Api.readNamespacedPodLog(name, namespace, containerName, false, false, null, null, null, null, 1000, null);
         return ResultKit.okWithData(logs);
     }
 

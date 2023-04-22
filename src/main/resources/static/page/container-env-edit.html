@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>layui</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="../../lib/layui-v2.6.3/css/layui.css" media="all">
+    <link rel="stylesheet" href="../../css/public.css" media="all">
+    <style>
+
+    </style>
+</head>
+<body>
+<div class="layuimini-container">
+    <div class="layuimini-main">
+        <fieldset class="layui-elem-field layui-field-title site-title">
+            <legend><a name="color-design">重新或重新发布才生效</a></legend>
+        </fieldset>
+
+
+        <div class="layui-table">
+            <table class="layui-hide" id="demo" lay-filter="demo"></table>
+        </div>
+    </div>
+
+</div>
+
+<script type="text/html" id="toolbarDemo">
+    <div class="layui-btn-container">
+       <button class="layui-btn layui-btn-xs layui-btn-normal" lay-event="addEnvItem">新增</button>
+       <button class="layui-btn layui-btn-xs layui-btn-normal" lay-event="saveEnv">保存</button>
+    </div>
+</script>
+
+<script src="../../lib/layui-v2.6.3/layui.js" charset="utf-8"></script>
+<script>
+    layui.use(['form', 'table'], function () {
+        var form = layui.form,
+            layer = layui.layer,
+
+            $ = layui.$;
+
+        const table = layui.table;
+
+        window.deploy = parent.deploy
+
+        const containers = window.deploy.containers || [];
+
+        const env = Array.from(containers[0].env || []);
+        function renderTable() {
+
+            table.render({
+                elem: '#demo'
+                , height: 300
+                , toolbar: `#toolbarDemo`
+                ,  editTrigger: 'dblclick'
+                , cols: [[
+                    {  title: '操作',width:70, templet: function (data) {
+
+                            return `<button class="layui-btn layui-btn-xs layui-btn-warm" onclick="removeEnvItem(${data.LAY_TABLE_INDEX})">删除</button>`
+                        } }
+
+                    , {field: 'name',edit: 'text', title: 'name',width:280, align: 'center'}
+                    , {field: 'value', edit: 'text',title: 'value'}
+
+
+                ]],
+                data: env
+                , even: true
+                , limit: Number.MAX_SAFE_INTEGER
+            });
+        }
+
+        table.on('toolbar(demo)', function (obj) {
+            console.log(obj)
+            if (obj.event === 'addEnvItem') {  // 监听添加操作
+                var index = layer.open({
+                    title: '新增env',
+                    type: 1,
+                    shade: 0.2,
+                    maxmin: true,
+                    shadeClose: true,
+                    area: ['90%', '220px']
+                    ,btn: ['确定','取消'],
+                    content: `
+<div class="layui-form layuimini-form">
+
+    <div class="layui-form-item">
+        <label class="layui-form-label">name</label>
+        <div class="layui-input-block">
+            <input type="text" name="name" lay-verify="required" autocomplete="off" id="envName" placeholder="name" class="layui-input">
+        </div>
+    </div>
+
+    <div class="layui-form-item">
+        <label class="layui-form-label">value</label>
+        <div class="layui-input-block">
+            <input type="text" name="value" lay-verify="required" autocomplete="off" id="envValue" placeholder="value" class="layui-input">
+        </div>
+    </div>
+
+
+</div>`,
+                    success: function (layero, index) {
+
+                        try {
+
+
+                        } catch (e) {
+                            console.error(e)
+                        }
+                    }, btn1: function(index, layero){
+
+                           const envName = document.getElementById("envName").value
+                           const envValue = document.getElementById("envValue").value
+                        if (envName === '' || envValue === '') {
+                            layer.msg('请输入有效的值')
+                            return
+                        }
+                        env.push({name: envName, value: envValue})
+                        renderTable()
+                        layer.close(index)
+                        return false // 开启该代码可禁止点击该按钮关闭
+                    }
+                });
+            } else if (obj.event === 'saveEnv') {
+
+                $.ajax({
+                    type: "POST",
+                    url: `../deploy/updateEnv/${window.deploy.namespace}/${window.deploy.name}`+'?k8sId='+parent.k8sId,
+
+                    traditional:true,
+                    data:JSON.stringify(env),
+                    contentType: "application/json",
+                    async:false,
+                    success: (result) => {
+                        if (result.code ===10000) {
+                            parent.layer.msg('发送成功',{
+                                icon: 1,
+                                    time: 2000 //2秒关闭（如果不配置，默认是3秒）
+                            }, function(){
+                                parent.location.reload()
+                            })
+
+                        }else {
+                            parent.layer.msg(res.msg)
+                        }
+
+                    }
+                });
+
+
+
+            }
+        });
+
+        renderTable()
+
+        function removeEnvItem(LAY_TABLE_INDEX) {
+            for (let i = 0; i < env.length; i++) {
+                if (i===LAY_TABLE_INDEX) {
+                    env.splice(i, 1)
+                    renderTable()
+                    break
+                }
+            }
+        }
+
+        window.removeEnvItem = removeEnvItem
+
+        function addEnvItem() {
+
+
+
+        }
+        window.addEnvItem =addEnvItem
+
+
+    });
+</script>
+</body>
+</html>
