@@ -17,8 +17,8 @@ spring:
     hikari:
       max-lifetime: 120000
       # 设置连接池连接的最长生命周期时间，达到超时时间后连接将强制断开并回收，以防止连接泄漏的可能性。 会抛异常，但仍会正常查询，
-      leak-detection-threshold: 2000
-      pool-name: h2-database
+      leak-detection-threshold: 10000
+      pool-name: kwk-database
 
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
@@ -105,6 +105,7 @@ spring:
     activate:
       on-profile: h2
   datasource:
+    driver-class-name: org.h2.Driver
     url: jdbc:h2:file:${upload.path.linux}kwk
     username: kwk
     password: kwkpassword

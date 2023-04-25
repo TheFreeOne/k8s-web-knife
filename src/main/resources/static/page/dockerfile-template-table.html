@@ -161,7 +161,11 @@ MAINTAINER fileonwer
 CMD ["bash"]
 
 #使用add 下载，                              放到该目录下并设置文件名，避免下载接口千奇百怪
-ADD http://192.168.0.142:8080/getWarOrJar  /usr/local/tomcat/webapps/ROOT.war
+# ADD http://192.168.0.142:8080/getWarOrJar  /usr/local/tomcat/webapps/ROOT.war
+# DockerBuildFileDownloadController 下的下载方法 get
+# ADD http://192.168.0.142:8080/getFile/ROOT.war/1/uuid  /usr/local/tomcat/webapps/ROOT.war
+# ip和端口可能需要人为替换
+ADD http://${kwk.ip}:8080/download/${kwk.fileId}/${kwk.ticket}/${kwk.filename}  /usr/local/tomcat/webapps/ROOT.war
 
 # 工作目录
 WORKDIR /usr/local/tomcat

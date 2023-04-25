@@ -145,7 +145,7 @@
                                         </div>
 
                                         <div class="layui-inline"  style=" min-width: 466px; ">
-                                            <label class="layui-form-label">检测次数</label>
+                                            <label class="layui-form-label">检测间隔</label>
                                             <div class="layui-input-inline"  >
                                                 <input class="layui-input" style="width: 360px" name="periodSeconds"     readonly>
                                             </div>
@@ -196,7 +196,7 @@
                                         </div>
 
                                         <div class="layui-inline"  style=" min-width: 466px; ">
-                                            <label class="layui-form-label">检测次数</label>
+                                            <label class="layui-form-label">检测间隔</label>
                                             <div class="layui-input-inline"  >
                                                 <input class="layui-input" style="width: 360px" name="periodSeconds"     readonly>
                                             </div>
@@ -270,7 +270,7 @@
                 table.render({
                     elem: '#conditionsTable'
                     ,cols: [[ //标题栏
-                         {field: 'type', title: '类别', width: 105}
+                         {field: 'type', title: '类别', width: 150}
                         ,{field: 'status', title: '状态', width: 80}
                         ,{field: 'lastUpdateTime', title: '最后检测时间', width: 220}
                         ,{field: 'lastTransitionTime', title: '最后迁移时间', width: 220}
@@ -293,11 +293,11 @@
                 table.render({
                     elem: '#eventsTable'
                     ,cols: [[ //标题栏
-                        {field: 'name', title: '名称', width: 105}
+                        {field: 'name', title: '名称', width: 420}
                         ,{field: 'type', title: '类型', width: 105}
-                        ,{field: 'reason', title: '原因', width: 80}
-                        ,{field: 'message', title: '信息' }
+                        ,{field: 'reason', title: '原因', width: 100}
                         ,{field: 'createAt', title: '时间', width: 220}
+                        ,{field: 'message', title: '信息' }
                     ]]
                     ,data:events
                     //,skin: 'line' //表格风格

@@ -28,8 +28,9 @@ public class ProbeVo {
      * 初始化等待秒
      */
     private Integer initialDelaySeconds;
+
     /**
-     * 检测次数
+     * 检测次数间隔
      */
     private Integer periodSeconds;
 
@@ -39,7 +40,7 @@ public class ProbeVo {
     private Integer successThreshold;
 
     /**
-     * null
+     * Pod 删除的优雅期限
      */
     private Long terminationGracePeriodSeconds;
     /**

@@ -124,6 +124,26 @@ spec:
                       values:
                         - kube-dns
                 topologyKey: kubernetes.io/hostname
+      priorityClassName: system-cluster-critical
+      tolerations:
+        - key: CriticalAddonsOnly
+          operator: Exists
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/master
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/control-plane
+      nodeSelector:
+        kubernetes.io/os: linux
+      restartPolicy: Always
+      serviceAccount: coredns
+      dnsPolicy: Default
+      volumes:
+        - name: config-volume
+          configMap:
+            name: coredns
+            items:
+              - key: Corefile
+                path: Corefile
       containers:
         - name: coredns
           image: registry.aliyuncs.com/google_containers/coredns:v1.9.3
@@ -177,26 +197,6 @@ spec:
               drop:
                 - all
             readOnlyRootFilesystem: true
-          nodeSelector:
-            kubernetes.io/os: linux
-          priorityClassName: system-cluster-critical
-          restartPolicy: Always
-          serviceAccount: coredns
-          tolerations:
-            - key: CriticalAddonsOnly
-              operator: Exists
-            - effect: NoSchedule
-              key: node-role.kubernetes.io/master
-            - effect: NoSchedule
-              key: node-role.kubernetes.io/control-plane
-          dnsPolicy: Default
-          volumes:
-            - name: config-volume
-              configMap:
-                name: coredns
-                items:
-                  - key: Corefile
-                    path: Corefile
 ---
 apiVersion: v1
 kind: Service

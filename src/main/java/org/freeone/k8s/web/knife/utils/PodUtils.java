@@ -298,6 +298,7 @@ public class PodUtils extends DeploymentUtils {
 
                             Map<String, String> map = new HashMap<>();
                             map.put(name, value);
+                            headerList.add(map);
                         }
 
                     }
@@ -351,13 +352,17 @@ public class PodUtils extends DeploymentUtils {
                     httpGetActionVo.setHost(host);
 
                     List<Map<String, String>> headerList = new ArrayList<>();
-                    for (V1HTTPHeader httpHeader : httpHeaders) {
-                        String name = httpHeader.getName();
-                        String value = httpHeader.getValue();
+                    if (httpHeaders != null) {
+                        for (V1HTTPHeader httpHeader : httpHeaders) {
+                            String name = httpHeader.getName();
+                            String value = httpHeader.getValue();
 
-                        Map<String, String> map = new HashMap<>();
-                        map.put(name, value);
+                            Map<String, String> map = new HashMap<>();
+                            map.put(name, value);
+                            headerList.add(map);
+                        }
                     }
+
 
                     httpGetActionVo.setHttpHeaders(headerList);
                 }
@@ -496,13 +501,16 @@ public class PodUtils extends DeploymentUtils {
                 httpGetActionVo.setHost(host);
 
                 List<Map<String, String>> headerList = new ArrayList<>();
-                for (V1HTTPHeader httpHeader : httpHeaders) {
-                    String name = httpHeader.getName();
-                    String value = httpHeader.getValue();
+                if (httpHeaders != null) {
+                    for (V1HTTPHeader httpHeader : httpHeaders) {
+                        String name = httpHeader.getName();
+                        String value = httpHeader.getValue();
 
-                    Map<String, String> map = new HashMap<>();
-                    map.put(name, value);
+                        Map<String, String> map = new HashMap<>();
+                        map.put(name, value);
+                    }
                 }
+
 
                 httpGetActionVo.setHttpHeaders(headerList);
             }

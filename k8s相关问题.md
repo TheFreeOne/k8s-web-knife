@@ -16,3 +16,9 @@ FLANNEL_IPMASQ=true
 - FLANNEL_SUBNET：节点访问Flannel子网的IP地址和子网掩码。
 - FLANNEL_MTU：节点上的Flannel网卡的MTU值。
 - FLANNEL_IPMASQ：用于NAT整个子网的IP aacking。
+
+### dial tcp 10.96.0.1:443: i/o timeout
+
+#### failed to load Kubelet config file /var/lib/kubelet/config.yaml
+
+

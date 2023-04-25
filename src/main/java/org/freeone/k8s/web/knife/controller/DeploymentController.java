@@ -12,18 +12,24 @@ import io.kubernetes.client.openapi.models.V1Deployment;
 import io.kubernetes.client.openapi.models.V1DeploymentSpec;
 import io.kubernetes.client.openapi.models.V1DeploymentStrategy;
 import io.kubernetes.client.openapi.models.V1EnvVar;
+import io.kubernetes.client.openapi.models.V1HTTPGetAction;
+import io.kubernetes.client.openapi.models.V1HTTPGetActionBuilder;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1Pod;
+import io.kubernetes.client.openapi.models.V1Probe;
 import io.kubernetes.client.openapi.models.V1ReplicaSet;
 import io.kubernetes.client.openapi.models.V1RollingUpdateDeployment;
 import io.kubernetes.client.util.Namespaces;
 import io.kubernetes.client.util.PatchUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.freeone.k8s.web.knife.entity.vo.ContainerVo;
 import org.freeone.k8s.web.knife.entity.vo.DeploymentStatusVo;
 import org.freeone.k8s.web.knife.entity.vo.DeploymentStrategyVo;
 import org.freeone.k8s.web.knife.entity.vo.DeploymentVo;
 import org.freeone.k8s.web.knife.entity.vo.EnvVarVo;
+import org.freeone.k8s.web.knife.entity.vo.HTTPGetActionVo;
 import org.freeone.k8s.web.knife.entity.vo.PodVo;
+import org.freeone.k8s.web.knife.entity.vo.ProbeVo;
 import org.freeone.k8s.web.knife.entity.vo.ReplicaSetVo;
 import org.freeone.k8s.web.knife.entity.vo.RolloutHistoryVo;
 import org.freeone.k8s.web.knife.repository.K8sApiServerConfigRepository;
@@ -40,6 +46,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -285,6 +292,7 @@ public class DeploymentController {
 
         return ResultKit.ok();
     }
+
     @RequestMapping("/updateEnv/{namespace}/{name}")
     public ResultKit updateEnv(@PathVariable("namespace") String namespace, @PathVariable("name") String deploymentName, @RequestBody EnvVarVo[] env, @RequestParam Long k8sId) throws Exception {
 
@@ -298,23 +306,29 @@ public class DeploymentController {
             v1EnvVar.setValue(envVarVo.getValue());
             envVarList.add(v1EnvVar);
         }
+
+//        V1EnvVar v1EnvVar = new V1EnvVar();
+//        v1EnvVar.setName("kwk.env.update");
+//        v1EnvVar.setValue(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
+//        envVarList.add(v1EnvVar);
         v1Container.setEnv(envVarList);
-        String serialize = apiClient.getJSON().serialize(runningDeployment);
-        PatchUtils.patch(
-                V1Deployment.class,
-                () ->
-                        K8sUtils.appsV1Api(apiClient).patchNamespacedDeploymentCall(
-                                deploymentName,
-                                namespace,
-                                new V1Patch(serialize),
-                                null,
-                                null,
-                                "kubectl-rollout",
-                                null,
-                                null,
-                                null),
-                V1Patch.PATCH_FORMAT_STRATEGIC_MERGE_PATCH,
-                apiClient);
+//        String serialize = apiClient.getJSON().serialize(runningDeployment);
+//        PatchUtils.patch(
+//                V1Deployment.class,
+//                () ->
+//                        K8sUtils.appsV1Api(apiClient).patchNamespacedDeploymentCall(
+//                                deploymentName,
+//                                namespace,
+//                                new V1Patch(serialize),
+//                                null,
+//                                null,
+//                                "kubectl-rollout",
+//                                null,
+//                                null,
+//                                null),
+//                V1Patch.PATCH_FORMAT_STRATEGIC_MERGE_PATCH,
+//                apiClient);
+        K8sUtils.appsV1Api(apiClient).replaceNamespacedDeployment(deploymentName, namespace, runningDeployment, null, null, null, null);
         return ResultKit.ok();
     }
 
@@ -342,6 +356,7 @@ public class DeploymentController {
         Kubectl.scale(V1Deployment.class).name(name).namespace(namespace).replicas(0).apiClient(apiClient).execute();
         return ResultKit.ok();
     }
+
     @RequestMapping("/online/{namespace}/{name}")
     public ResultKit onlineDeployment(@PathVariable("namespace") String namespace, @PathVariable("name") String name, @RequestParam Long k8sId) throws Exception {
 
@@ -389,6 +404,91 @@ public class DeploymentController {
             v1DeploymentStrategy.setRollingUpdate(null);
         }
         K8sUtils.appsV1Api(apiClient).replaceNamespacedDeployment(name, namespace, deployment, null, null, null, null);
+        return ResultKit.ok();
+    }
+
+    @RequestMapping("/updateProbe/{namespace}/{name}")
+    public ResultKit updateProbe(@RequestBody ContainerVo request, @PathVariable("namespace") String namespace, @PathVariable("name") String name, @RequestParam Long k8sId, @RequestParam String probeType) throws KubectlException, ApiException {
+        if (!"HTTP Probe".equals(probeType)) {
+            return ResultKit.failed("不支持此种检测方式");
+        }
+        ApiClient apiClient = K8sUtils.apiClient(k8sId);
+        V1Deployment runningDeployment = Kubectl.get(V1Deployment.class).namespace(namespace).name(name).apiClient(apiClient).execute();
+        V1Container v1Container = runningDeployment.getSpec().getTemplate().getSpec().getContainers().get(0);
+        ProbeVo readinessProbe = request.getReadinessProbe();
+        ProbeVo livenessProbe = request.getLivenessProbe();
+        if (readinessProbe != null) {
+            V1Probe readinessV1Probe = new V1Probe();
+            readinessV1Probe.setFailureThreshold(readinessProbe.getFailureThreshold());
+            readinessV1Probe.setSuccessThreshold(readinessProbe.getSuccessThreshold());
+            readinessV1Probe.setPeriodSeconds(readinessProbe.getPeriodSeconds());
+            readinessV1Probe.setInitialDelaySeconds(readinessProbe.getInitialDelaySeconds());
+            readinessV1Probe.setTimeoutSeconds(readinessProbe.getTimeoutSeconds());
+            readinessV1Probe.setTerminationGracePeriodSeconds(readinessProbe.getTerminationGracePeriodSeconds());
+
+
+            if (readinessProbe.getHttpGet() != null) {
+                HTTPGetActionVo httpGet = readinessProbe.getHttpGet();
+                V1HTTPGetActionBuilder v1HTTPGetActionBuilder = new V1HTTPGetActionBuilder();
+                if (httpGet.getScheme() != null) {
+                    v1HTTPGetActionBuilder.withScheme(httpGet.getScheme());
+                }
+                if (httpGet.getPortInt() != null) {
+                    v1HTTPGetActionBuilder.withNewPort(httpGet.getPortInt());
+                }
+                if (httpGet.getPath() != null) {
+                    v1HTTPGetActionBuilder.withPath(httpGet.getPath());
+                }
+                V1HTTPGetAction v1httpGet = v1HTTPGetActionBuilder.build();
+                readinessV1Probe.setHttpGet(v1httpGet);
+            }
+            v1Container.setReadinessProbe(readinessV1Probe);
+        }
+        if (livenessProbe != null) {
+            V1Probe livenessV1Probe = new V1Probe();
+            livenessV1Probe.setFailureThreshold(livenessProbe.getFailureThreshold());
+            livenessV1Probe.setSuccessThreshold(livenessProbe.getSuccessThreshold());
+            livenessV1Probe.setPeriodSeconds(livenessProbe.getPeriodSeconds());
+            livenessV1Probe.setInitialDelaySeconds(livenessProbe.getInitialDelaySeconds());
+            livenessV1Probe.setTimeoutSeconds(livenessProbe.getTimeoutSeconds());
+            livenessV1Probe.setTerminationGracePeriodSeconds(livenessProbe.getTerminationGracePeriodSeconds());
+
+
+            if (livenessProbe.getHttpGet() != null) {
+                HTTPGetActionVo httpGet = livenessProbe.getHttpGet();
+                V1HTTPGetActionBuilder v1HTTPGetActionBuilder = new V1HTTPGetActionBuilder();
+                if (httpGet.getScheme() != null) {
+                    v1HTTPGetActionBuilder.withScheme(httpGet.getScheme());
+                }
+                if (httpGet.getPortInt() != null) {
+                    v1HTTPGetActionBuilder.withNewPort(httpGet.getPortInt());
+                }
+                if (httpGet.getPath() != null) {
+                    v1HTTPGetActionBuilder.withPath(httpGet.getPath());
+                }
+                V1HTTPGetAction v1httpGet = v1HTTPGetActionBuilder.build();
+                livenessV1Probe.setHttpGet(v1httpGet);
+            }
+
+            v1Container.setLivenessProbe(livenessV1Probe);
+        }
+        String serialize = apiClient.getJSON().serialize(runningDeployment);
+        PatchUtils.patch(
+                V1Deployment.class,
+                () ->
+                        K8sUtils.appsV1Api(apiClient).patchNamespacedDeploymentCall(
+                                name,
+                                namespace,
+                                new V1Patch(serialize),
+                                null,
+                                null,
+                                "kubectl-rollout",
+                                null,
+                                null,
+                                null),
+                V1Patch.PATCH_FORMAT_STRATEGIC_MERGE_PATCH,
+                apiClient);
+
         return ResultKit.ok();
     }
 
