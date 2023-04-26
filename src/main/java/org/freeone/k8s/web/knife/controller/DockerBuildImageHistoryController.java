@@ -30,6 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.persistence.QueryHint;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.io.File;
@@ -68,15 +69,16 @@ public class DockerBuildImageHistoryController {
                 List<Predicate> predicates = new ArrayList<>();
 //                predicates.add(criteriaBuilder.equal(root.get("")))
 //                criteriaQuery.where(predicates.toArray(new Predicate[predicates.size()]));
-
-                return criteriaQuery.where(predicates.toArray(new Predicate[predicates.size()])).getRestriction();
+                Order idDesc = criteriaBuilder.desc(root.get("id"));
+//                return criteriaQuery.where(predicates.toArray(new Predicate[predicates.size()])).orderBy(idDesc).getRestriction();
+                // 这样就没有where 1 = 1了
+                criteriaQuery.orderBy(idDesc);
+                return criteriaQuery.getRestriction();
 //                return criteriaBuilder.and(predicates.toArray(new Predicate[predicates.size()]));
             }
         };
         Sort sort = Sort.by(Sort.Order.desc("id"));
-
-        PageRequest pageRequest = PageRequest.of(pageNumber - 1, pageSize, sort);
-
+        PageRequest pageRequest = PageRequest.of(pageNumber - 1, pageSize);
         Page<DockerImageBuildHistory> page = dockerImageBuildHisotyRepository.findAll(specification, pageRequest);
         return ResultKit.okWithData(page);
     }
