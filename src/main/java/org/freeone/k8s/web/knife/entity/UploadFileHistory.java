@@ -14,20 +14,24 @@ import java.util.Date;
 @Entity
 public class UploadFileHistory {
 
-    private Long id;
-
-    private String uploadPath;
-
-    private Date createTime;
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
+    private Long id;
+
+    @Column(name = "upload_path", nullable = false, columnDefinition = "varchar(1024) comment '文件保存的路径'")
+    private String uploadPath;
+
+    @CreatedDate
+    @Column(name = "create_time", nullable = false, columnDefinition = "datetime(0)  comment '创建时间'")
+    private Date createTime;
+
+
     public Long getId() {
         return this.id;
     }
 
-    @Column(name = "upload_path", nullable = false, columnDefinition = "varchar(1024) comment '文件保存的路径'")
+
     public String getUploadPath() {
         return this.uploadPath;
     }
@@ -35,8 +39,7 @@ public class UploadFileHistory {
 
 
 
-    @CreatedDate
-    @Column(name = "create_time", nullable = false, columnDefinition = "datetime(0)  comment '创建时间'")
+
     public Date getCreateTime() {
         return this.createTime;
     }

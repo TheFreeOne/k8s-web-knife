@@ -17,40 +17,48 @@ import java.util.Date;
 @Table(name = "tb_docker_api_config")
 @Entity
 public class DockerApiConfig {
-
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
     /**
      * tcp://192.168.110.130:12375
      */
+    @Column(name = "host_path", nullable = false, columnDefinition = "varchar(2048)  comment 'dockerapi服务的路径'")
     private String hostPath;
 
     /**
      * 1.41 docker info
      */
+    @Column(name = "api_version", nullable = false, columnDefinition = " varchar(2048) default ''  comment 'api服务的版本 docker info 查看'")
     private String apiVersion;
 
+    @Column(name = "docker_name", nullable = false, columnDefinition = " varchar(256) default ''  comment '目标docker的名字'")
     private String dockerName;
 
+    @CreatedDate
+    @Column(name = "create_time", nullable = true, columnDefinition = "datetime(0)  comment '创建时间'")
     private Date createTime;
+
     /**
      * 客户端证书
      */
+    @Column(name = "client_cert_pem", nullable = true, columnDefinition = "longtext  comment '客户端证书'")
     private String clientCertPem;
+
     /**
      * 客户端私钥
      */
+    @Column(name = "client_key_pem", nullable = true, columnDefinition = "longtext  comment '客户端私钥'")
     private String clientKeyPem;
 
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
     public Long getId() {
         return this.id;
     }
 
-    @Column(name = "host_path", nullable = false, columnDefinition = "varchar(2048)  comment 'dockerapi服务的路径'")
+
     public String getHostPath() {
         return this.hostPath;
     }
@@ -59,25 +67,22 @@ public class DockerApiConfig {
         this.hostPath = hostPath;
     }
 
-    @Column(name = "api_version", nullable = false, columnDefinition = " varchar(2048) default ''  comment 'api服务的版本 docker info 查看'")
 
     public String getApiVersion() {
         return this.apiVersion;
     }
 
 
-    @CreatedDate
-    @Column(name = "create_time", nullable = true, columnDefinition = "datetime(0)  comment '创建时间'")
     public Date getCreateTime() {
         return this.createTime;
     }
 
-    @Column(name = "client_cert_pem", nullable = true, columnDefinition = "longtext  comment '客户端证书'")
+
     public String getClientCertPem() {
         return this.clientCertPem;
     }
 
-    @Column(name = "client_key_pem", nullable = true, columnDefinition = "longtext  comment '客户端私钥'")
+
     public String getClientKeyPem() {
         return this.clientKeyPem;
     }

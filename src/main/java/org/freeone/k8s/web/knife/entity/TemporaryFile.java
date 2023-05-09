@@ -16,34 +16,38 @@ import java.util.Date;
 @Entity
 public class TemporaryFile {
 
-    private Long id;
-
-    private String filePath;
-
-    private Date createTime;
-
-    private String ticket;
-
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "testSeq")
     @SequenceGenerator(name = "testSeq", initialValue = 10_000, allocationSize = 1, sequenceName = "TEST_SEQUENCE")
     @Column(name = "id")
+    private Long id;
+
+    @Column(name = "file_path", nullable = false, columnDefinition = "varchar(2048) comment '绝对路径' ")
+    private String filePath;
+
+    @CreatedDate
+    @Column(name = "create_time", nullable = false, columnDefinition = "datetime(0)  comment '创建时间'")
+    private Date createTime;
+
+    @Column(name = "ticket", nullable = false, columnDefinition = "varchar(256) comment '下载文件的票据'")
+    private String ticket;
+
+
     public Long getId() {
         return id;
     }
 
-    @Column(name = "file_path", nullable = false, columnDefinition = "varchar(2048) comment '绝对路径' ")
+
     public String getFilePath() {
         return this.filePath;
     }
 
-    @CreatedDate
-    @Column(name = "create_time", nullable = false, columnDefinition = "datetime(0)  comment '创建时间'")
+
     public Date getCreateTime() {
         return this.createTime;
     }
 
-    @Column(name = "ticket", nullable = false, columnDefinition = "varchar(256) comment '下载文件的票据'")
+
     public String getTicket() {
         return this.ticket;
     }

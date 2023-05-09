@@ -17,40 +17,44 @@ import java.util.Date;
 @Entity
 public class K8sApiServerConfig {
 
-    private Long id;
-
-    private String apiServerUrl;
-
-    private String k8sSecret;
-
-    private String clusterName;
-
-
-    private Date createTime;
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
+    private Long id;
+
+    @Column(name = "api_server_url", nullable = false, columnDefinition = "varchar(2048)  comment 'k8s api_server路径'")
+    private String apiServerUrl;
+
+    @Column(name = "k8s_secret", nullable = false, columnDefinition = "varchar(4096)  comment 'k8s api_server路径'")
+    private String k8sSecret;
+
+    @Column(name = "cluster_name", nullable = false, columnDefinition = "varchar(4096)  comment 'k8s api_server路径'")
+    private String clusterName;
+
+    @CreatedDate
+    @Column(name = "create_time", nullable = true, columnDefinition = "datetime(0)  comment '创建时间'")
+    private Date createTime;
+
+
     public Long getId() {
         return this.id;
     }
 
-    @Column(name = "api_server_url", nullable = false, columnDefinition = "varchar(2048)  comment 'k8s api_server路径'")
+
     public String getApiServerUrl() {
         return this.apiServerUrl;
     }
-    @Column(name = "k8s_secret", nullable = false, columnDefinition = "varchar(4096)  comment 'k8s api_server路径'")
+
     public String getK8sSecret() {
         return this.k8sSecret;
     }
 
-    @Column(name = "cluster_name", nullable = false, columnDefinition = "varchar(4096)  comment 'k8s api_server路径'")
+
     public String getClusterName() {
         return this.clusterName;
     }
 
-    @CreatedDate
-    @Column(name = "create_time", nullable = true, columnDefinition = "datetime(0)  comment '创建时间'")
+
     public Date getCreateTime() {
         return this.createTime;
     }

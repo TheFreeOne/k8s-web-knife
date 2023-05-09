@@ -15,32 +15,39 @@ import java.util.Date;
 @Entity
 public class DockerfileTemplate {
 
-
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
+    @Column(name = "template_name", nullable = false, columnDefinition = "varchar(64)  comment '模板名称'")
     private String templateName;
+
     /**
      * 构建文件所属的docker api
      */
+    @Column(name = "target_docker_id", nullable = false, columnDefinition = "bigint comment '所属的dockerId' ")
     private Long targetDockerId;
 
+    @Column(name = "content",   columnDefinition = "longtext comment '模板文件的内容' ")
     private String content;
 
+    @CreatedDate
+    @Column(name = "create_time", nullable = false, columnDefinition = "datetime(0)  comment '创建时间'")
     private Date createTime;
 
+    @Column(name = "is_readonly",   columnDefinition = "bit comment '是否只读,系统加的只读' ")
     private Boolean isReadonly;
 
 
 
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
+
     public Long getId() {
         return this.id;
     }
 
-    @Column(name = "target_docker_id", nullable = false, columnDefinition = "bigint comment '所属的dockerId' ")
+
     public Long getTargetDockerId() {
         return this.targetDockerId;
     }
@@ -49,7 +56,7 @@ public class DockerfileTemplate {
         this.targetDockerId = targetDockerId;
     }
 
-    @Column(name = "content",   columnDefinition = "longtext comment '模板文件的内容' ")
+
     public String getContent() {
         return this.content;
     }
@@ -57,13 +64,12 @@ public class DockerfileTemplate {
     public void setContent(String content) {
         this.content = content;
     }
-    @CreatedDate
-    @Column(name = "create_time", nullable = false, columnDefinition = "datetime(0)  comment '创建时间'")
+
     public Date getCreateTime() {
         return this.createTime;
     }
 
-    @Column(name = "template_name", nullable = false, columnDefinition = "varchar(64)  comment '模板名称'")
+
     public String getTemplateName() {
         return this.templateName;
     }
@@ -75,7 +81,7 @@ public class DockerfileTemplate {
     public void setCreateTime(Date createTime) {
         this.createTime = createTime;
     }
-    @Column(name = "is_readonly",   columnDefinition = "bit comment '是否只读,系统加的只读' ")
+
     public Boolean getIsReadonly() {
         return this.isReadonly;
     }
