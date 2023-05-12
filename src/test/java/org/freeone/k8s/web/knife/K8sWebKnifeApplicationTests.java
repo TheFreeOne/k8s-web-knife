@@ -1,5 +1,6 @@
 package org.freeone.k8s.web.knife;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.ListImagesCmd;
@@ -7,6 +8,10 @@ import com.github.dockerjava.api.model.Image;
 import com.google.common.io.ByteStreams;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import io.fabric8.kubernetes.api.model.Node;
+import io.fabric8.kubernetes.api.model.NodeList;
+import io.fabric8.kubernetes.api.model.apps.Deployment;
+import io.fabric8.kubernetes.client.KubernetesClient;
 import io.kubernetes.client.Exec;
 import io.kubernetes.client.custom.IntOrString;
 import io.kubernetes.client.custom.Quantity;
@@ -80,6 +85,13 @@ public class K8sWebKnifeApplicationTests {
 
     @Autowired
     private DockerBuildService dockerBuildService;
+    @Test
+    public void  testK8sConnect() throws JsonProcessingException {
+        KubernetesClient kubernetesClient = K8sUtils.k8sClient(1L);
+        NodeList list = kubernetesClient.nodes().list();
+        List<Node> items = list.getItems();
+        System.out.println(objectMapper.writeValueAsString(items.get(0)));
+    }
 
     @Test
     public void testBuildkit() throws Exception {

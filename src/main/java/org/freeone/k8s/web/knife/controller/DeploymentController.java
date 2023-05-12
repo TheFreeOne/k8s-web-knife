@@ -1,5 +1,10 @@
 package org.freeone.k8s.web.knife.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.fabric8.kubernetes.api.model.NodeList;
+import io.fabric8.kubernetes.api.model.apps.Deployment;
+import io.fabric8.kubernetes.client.KubernetesClient;
 import io.kubernetes.client.custom.IntOrString;
 import io.kubernetes.client.custom.V1Patch;
 import io.kubernetes.client.extended.kubectl.Kubectl;
@@ -14,6 +19,7 @@ import io.kubernetes.client.openapi.models.V1DeploymentStrategy;
 import io.kubernetes.client.openapi.models.V1EnvVar;
 import io.kubernetes.client.openapi.models.V1HTTPGetAction;
 import io.kubernetes.client.openapi.models.V1HTTPGetActionBuilder;
+import io.kubernetes.client.openapi.models.V1Node;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1Probe;
@@ -21,6 +27,7 @@ import io.kubernetes.client.openapi.models.V1ReplicaSet;
 import io.kubernetes.client.openapi.models.V1RollingUpdateDeployment;
 import io.kubernetes.client.util.Namespaces;
 import io.kubernetes.client.util.PatchUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.freeone.k8s.web.knife.entity.vo.ContainerVo;
 import org.freeone.k8s.web.knife.entity.vo.DeploymentStatusVo;
@@ -73,35 +80,68 @@ public class DeploymentController {
     @Autowired
     private K8sApiServerConfigRepository k8sConfigRecordRepository;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
 
     @RequestMapping("/list")
-    public ResultKit list(@RequestParam Long k8sId) throws ApiException, KubectlException {
-
-        List<V1Deployment> execute = Kubectl.get(V1Deployment.class).namespace(Namespaces.NAMESPACE_DEFAULT).apiClient(K8sUtils.apiClient(k8sId)).execute();
-        List<V1Deployment> items = execute;
+    public ResultKit list(@RequestParam Long k8sId, String version) throws ApiException, KubectlException, JsonProcessingException {
         List<DeploymentVo> list = new ArrayList<>();
-        for (V1Deployment v1Deployment : items) {
-            V1DeploymentSpec spec = v1Deployment.getSpec();
-            String image = DeploymentUtils.findImage(v1Deployment);
-            V1ObjectMeta v1ObjectMeta = v1Deployment.getMetadata();
-            // mytomcat-deployment
-            String name = v1ObjectMeta.getName();
-            String namespace = v1ObjectMeta.getNamespace();
-            String uid = v1ObjectMeta.getUid();
-            OffsetDateTime creationTimestamp = v1ObjectMeta.getCreationTimestamp();
-            Date createTime = Date.from(creationTimestamp.atZoneSameInstant(ZoneId.systemDefault()).toInstant());
-            int replicas = DeploymentUtils.findReplicas(v1Deployment);
-            int readyReplicas = DeploymentUtils.findReadyReplicas(v1Deployment);
+        if(StringUtils.isNoneBlank(version)) {
+            KubernetesClient kubernetesClient = K8sUtils.k8sClient(k8sId);
+            List<Deployment> items = kubernetesClient.apps().deployments().list().getItems();
+            for (Deployment item : items) {
+                String json = objectMapper.writeValueAsString(item);
+                V1Deployment v1Deployment = K8sUtils.apiClient(k8sId).getJSON().deserialize(json, V1Deployment.class);
+                String image = DeploymentUtils.findImage(v1Deployment);
+                V1ObjectMeta v1ObjectMeta = v1Deployment.getMetadata();
+                // mytomcat-deployment
+                String name = v1ObjectMeta.getName();
+                String namespace = v1ObjectMeta.getNamespace();
+                String uid = v1ObjectMeta.getUid();
+                OffsetDateTime creationTimestamp = v1ObjectMeta.getCreationTimestamp();
+                Date createTime = Date.from(creationTimestamp.atZoneSameInstant(ZoneId.systemDefault()).toInstant());
+                int replicas = DeploymentUtils.findReplicas(v1Deployment);
+                int readyReplicas = DeploymentUtils.findReadyReplicas(v1Deployment);
 
-            DeploymentVo deploymentVo = new DeploymentVo(uid, namespace, name, replicas, creationTimestamp);
-            deploymentVo.setImage(image);
-            deploymentVo.setCreateTime(createTime);
-            deploymentVo.setReadyReplicas(readyReplicas);
-            deploymentVo.setSelectorMatchLabels(DeploymentUtils.findSelectorMatcherLabels(v1Deployment));
+                DeploymentVo deploymentVo = new DeploymentVo(uid, namespace, name, replicas, creationTimestamp);
+                deploymentVo.setImage(image);
+                deploymentVo.setCreateTime(createTime);
+                deploymentVo.setReadyReplicas(readyReplicas);
+                deploymentVo.setSelectorMatchLabels(DeploymentUtils.findSelectorMatcherLabels(v1Deployment));
+
+                list.add(deploymentVo);
+            }
 
 
-            list.add(deploymentVo);
+        }else {
+            List<V1Deployment> execute = Kubectl.get(V1Deployment.class).namespace(Namespaces.NAMESPACE_DEFAULT).apiClient(K8sUtils.apiClient(k8sId)).execute();
+            List<V1Deployment> items = execute;
+
+            for (V1Deployment v1Deployment : items) {
+                String image = DeploymentUtils.findImage(v1Deployment);
+                V1ObjectMeta v1ObjectMeta = v1Deployment.getMetadata();
+                // mytomcat-deployment
+                String name = v1ObjectMeta.getName();
+                String namespace = v1ObjectMeta.getNamespace();
+                String uid = v1ObjectMeta.getUid();
+                OffsetDateTime creationTimestamp = v1ObjectMeta.getCreationTimestamp();
+                Date createTime = Date.from(creationTimestamp.atZoneSameInstant(ZoneId.systemDefault()).toInstant());
+                int replicas = DeploymentUtils.findReplicas(v1Deployment);
+                int readyReplicas = DeploymentUtils.findReadyReplicas(v1Deployment);
+
+                DeploymentVo deploymentVo = new DeploymentVo(uid, namespace, name, replicas, creationTimestamp);
+                deploymentVo.setImage(image);
+                deploymentVo.setCreateTime(createTime);
+                deploymentVo.setReadyReplicas(readyReplicas);
+                deploymentVo.setSelectorMatchLabels(DeploymentUtils.findSelectorMatcherLabels(v1Deployment));
+
+
+                list.add(deploymentVo);
+            }
         }
+
+
         return ResultKit.okWithData(list);
     }
 
